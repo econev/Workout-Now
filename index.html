@@ -10,11 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"
     rel="stylesheet">
 
-  <!-- jsPDF для экспорта -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <style>
-    /* ── RESET ── */
     * {
       margin: 0;
       padding: 0;
@@ -26,7 +22,6 @@
       scroll-behavior: smooth
     }
 
-    /* ── VARIABLES ── */
     :root {
       --bg: #080c10;
       --glass: rgba(255, 255, 255, 0.055);
@@ -45,7 +40,6 @@
       --sh: 0 8px 40px rgba(0, 0, 0, 0.55);
     }
 
-    /* ── BASE ── */
     body {
       background: var(--bg);
       color: var(--t);
@@ -53,7 +47,7 @@
       min-height: 100vh;
       overflow-x: hidden;
       font-size: 15px;
-      line-height: 1.5;
+      line-height: 1.5
     }
 
     body::before {
@@ -62,9 +56,7 @@
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      background:
-        radial-gradient(ellipse 600px 400px at 80% -10%, rgba(168, 255, 120, 0.035) 0%, transparent 70%),
-        radial-gradient(ellipse 500px 400px at -10% 90%, rgba(116, 185, 255, 0.025) 0%, transparent 70%);
+      background: radial-gradient(ellipse 600px 400px at 80% -10%, rgba(168, 255, 120, 0.035) 0%, transparent 70%), radial-gradient(ellipse 500px 400px at -10% 90%, rgba(116, 185, 255, 0.025) 0%, transparent 70%)
     }
 
     .wrap {
@@ -75,7 +67,7 @@
       z-index: 1
     }
 
-    /* ── HEADER ── */
+    /* HEADER */
     .hdr {
       text-align: center;
       padding: 32px 0 22px
@@ -99,7 +91,7 @@
       font-weight: 300
     }
 
-    /* ── CARD ── */
+    /* CARD */
     .card {
       background: var(--glass);
       border: 1px solid var(--gb);
@@ -108,10 +100,10 @@
       margin-bottom: 11px;
       box-shadow: var(--sh);
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px)
     }
 
-    /* ── LABELS ── */
+    /* LABELS */
     .lbl {
       font-family: 'Syne', sans-serif;
       font-size: 10px;
@@ -132,7 +124,7 @@
       display: block
     }
 
-    /* ── TEXTAREA ── */
+    /* TEXTAREA */
     .qi-wrap {
       position: relative
     }
@@ -172,7 +164,7 @@
       pointer-events: none
     }
 
-    /* ── CHIPS ── */
+    /* CHIPS */
     .chips {
       display: flex;
       flex-wrap: wrap;
@@ -200,7 +192,7 @@
       color: var(--acc)
     }
 
-    /* ── ADVANCED ── */
+    /* ADVANCED */
     .adv-tog {
       display: flex;
       align-items: center;
@@ -243,7 +235,7 @@
       margin-top: 11px
     }
 
-    /* ── FORM ── */
+    /* FORM */
     .fg {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -295,7 +287,7 @@
       border-color: var(--abrd)
     }
 
-    /* ── PILLS ── */
+    /* PILLS */
     .pills {
       display: flex;
       flex-wrap: wrap;
@@ -320,7 +312,7 @@
       color: var(--acc)
     }
 
-    /* ── GENERATE BTN ── */
+    /* GENERATE BTN */
     .btn-gen {
       width: 100%;
       padding: 15px;
@@ -370,7 +362,7 @@
       flex-shrink: 0
     }
 
-    /* ── PLAN ── */
+    /* PLAN */
     .plan-hdr {
       display: flex;
       align-items: flex-start;
@@ -422,7 +414,7 @@
       color: var(--t)
     }
 
-    /* ── OVERALL TIMER ── */
+    /* OVERALL TIMER */
     .ot {
       background: rgba(168, 255, 120, 0.045);
       border: 1px solid rgba(168, 255, 120, 0.11);
@@ -475,7 +467,7 @@
       background: rgba(168, 255, 120, 0.22)
     }
 
-    /* ── PROGRESS ── */
+    /* PROGRESS */
     .prog-row {
       display: flex;
       align-items: center;
@@ -506,7 +498,7 @@
       font-variant-numeric: tabular-nums
     }
 
-    /* ── SUMMARY ── */
+    /* SUMMARY */
     .sum {
       background: rgba(168, 255, 120, 0.035);
       border: 1px solid rgba(168, 255, 120, 0.09);
@@ -519,7 +511,7 @@
       margin-bottom: 13px
     }
 
-    /* ── EXPORT ── */
+    /* EXPORT */
     .exp-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -549,7 +541,7 @@
       color: var(--t)
     }
 
-    /* ── EXERCISES ── */
+    /* EXERCISES */
     .exlist {
       display: flex;
       flex-direction: column;
@@ -693,7 +685,7 @@
       font-weight: 300
     }
 
-    /* ── EXERCISE TIMER ── */
+    /* EX TIMER */
     .ext-wrap {
       margin-top: 11px;
       padding-top: 11px;
@@ -774,7 +766,7 @@
       background: rgba(255, 255, 255, 0.08)
     }
 
-    /* ── DONE BANNER ── */
+    /* DONE */
     .done-ban {
       text-align: center;
       padding: 22px 14px
@@ -798,7 +790,7 @@
       color: var(--tm)
     }
 
-    /* ── NOTIFICATION ── */
+    /* NOTIF */
     .notif {
       position: fixed;
       bottom: 22px;
@@ -821,7 +813,6 @@
       transform: translateX(-50%) translateY(0)
     }
 
-    /* ── FOOTER ── */
     footer {
       text-align: center;
       padding: 8px 0 0;
@@ -864,7 +855,6 @@
       <p>Скажи что есть — получи тренировку</p>
     </header>
 
-    <!-- INPUT CARD -->
     <div class="card" id="input-card">
       <span class="lbl">Опиши ситуацию</span>
       <div class="qi-wrap">
@@ -872,7 +862,6 @@
           placeholder="У меня есть 15 минут, стул, болит спина..."></textarea>
         <span class="qi-cnt" id="qcnt">0/300</span>
       </div>
-
       <div class="chips">
         <div class="chip" onclick="setEx('15 минут, только стул, болит поясница')">💺 Стул + поясница</div>
         <div class="chip" onclick="setEx('30 минут, дома без инвентаря, хочу кардио')">🏠 Дома без всего</div>
@@ -881,7 +870,6 @@
         <div class="chip" onclick="setEx('45 минут, гантели 10 кг, полная тренировка тела')">🏋️ Гантели дома</div>
       </div>
 
-      <!-- ADVANCED -->
       <div class="adv-tog" onclick="toggleAdv()">
         <svg class="adv-arr" id="adv-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M6 9l6 6 6-6" />
@@ -949,9 +937,7 @@
       </button>
     </div>
 
-    <!-- PLAN SECTION -->
     <div id="plan-sec" style="display:none">
-
       <div class="card fup">
         <div class="plan-hdr">
           <div>
@@ -960,7 +946,6 @@
           </div>
           <div class="btn-reset" onclick="resetPlan()">↺</div>
         </div>
-
         <div class="ot">
           <div>
             <div class="ot-lbl">Общее время</div>
@@ -971,24 +956,19 @@
             <button class="btn-t" onclick="resetOT()">⟲</button>
           </div>
         </div>
-
         <div class="prog-row">
           <div class="prog-bg">
             <div class="prog-fill" id="prog-fill"></div>
           </div>
           <span class="prog-txt" id="prog-txt">0 / 0</span>
         </div>
-
         <div class="sum" id="pl-sum"></div>
-
         <div class="exp-row">
           <button class="btn-exp" onclick="exportPDF()">📄 Скачать PDF</button>
           <button class="btn-exp" onclick="exportTxt()">📋 Скопировать</button>
         </div>
       </div>
-
       <div class="exlist" id="exlist"></div>
-
       <div id="done-wrap" style="display:none" class="card fup">
         <div class="done-ban">
           <span class="de">🎉</span>
@@ -996,89 +976,68 @@
           <p>Тренировка завершена. Тело скажет спасибо.</p>
         </div>
       </div>
-
     </div>
 
   </div>
-
   <footer>WorkoutNow · AI-powered · Без регистрации</footer>
   <div class="notif" id="notif"></div>
 
   <script>
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🔧 ПОСЛЕ ДЕПЛОЯ WORKER — ВСТАВЬ СЮДА ЕГО URL:
+    // ════════════════════════════════════════════════
+    // ВСТАВЬ СЮДА URL СВОЕГО CLOUDFLARE WORKER:
     const PROXY = "https://lingering-sound-50f9.conevgadget.workers.dev/";
-    // Пример: const PROXY = "workoutnow.conevgadget.workers.dev";
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Пример: const PROXY = "https://workout.john.workers.dev";
+    // ════════════════════════════════════════════════
 
     let plan = null, done = new Set(), activeIdx = -1;
-    let OT = { iv: null, s: 0, run: false };
-    let ET = { iv: null, s: 0, tot: 0, run: false, idx: -1 };
+    let OT = { iv: null, s: 0, run: false }, ET = { iv: null, s: 0, tot: 0, run: false, idx: -1 };
     let advOpen = false;
 
-    // ── INPUT ──
-    document.getElementById('qi').addEventListener('input', function () {
-      document.getElementById('qcnt').textContent = this.value.length + '/300';
-    });
-    function setEx(t) { document.getElementById('qi').value = t; document.getElementById('qcnt').textContent = t.length + '/300'; }
+    document.getElementById('qi').addEventListener('input', function () { document.getElementById('qcnt').textContent = this.value.length + '/300' });
+    function setEx(t) { document.getElementById('qi').value = t; document.getElementById('qcnt').textContent = t.length + '/300' }
 
-    // ── UTILS ──
-    function fmt(s) { s = Math.max(0, s || 0); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+    function fmt(s) { s = Math.max(0, s || 0); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') }
     let _nt;
-    function notif(msg, dur = 3000) { const el = document.getElementById('notif'); el.textContent = msg; el.classList.add('show'); clearTimeout(_nt); _nt = setTimeout(() => el.classList.remove('show'), dur); }
+    function notif(msg, dur = 3000) { const el = document.getElementById('notif'); el.textContent = msg; el.classList.add('show'); clearTimeout(_nt); _nt = setTimeout(() => el.classList.remove('show'), dur) }
 
-    // ── ADVANCED ──
-    function toggleAdv() {
-      advOpen = !advOpen;
-      document.getElementById('adv-sec').classList.toggle('open', advOpen);
-      document.getElementById('adv-arr').classList.toggle('open', advOpen);
-    }
-    function togglePill(el, gid, single) {
-      if (single) { document.querySelectorAll('#' + gid + ' .pill').forEach(p => p.classList.remove('on')); el.classList.add('on'); }
-      else { el.classList.toggle('on'); }
-    }
-    function getPills(gid) { return Array.from(document.querySelectorAll('#' + gid + ' .pill.on')).map(p => p.dataset.v); }
+    function toggleAdv() { advOpen = !advOpen; document.getElementById('adv-sec').classList.toggle('open', advOpen); document.getElementById('adv-arr').classList.toggle('open', advOpen) }
+    function togglePill(el, gid, single) { if (single) { document.querySelectorAll('#' + gid + ' .pill').forEach(p => p.classList.remove('on')); el.classList.add('on') } else { el.classList.toggle('on') } }
+    function getPills(gid) { return Array.from(document.querySelectorAll('#' + gid + ' .pill.on')).map(p => p.dataset.v) }
 
-    // ── PROMPT ──
     function buildPrompt() {
       const q = document.getElementById('qi').value.trim();
       const age = document.getElementById('fa').value, gen = document.getElementById('fgender').value;
       const wt = document.getElementById('fw').value, ht = document.getElementById('fh').value;
       const lvl = getPills('fl'), goals = getPills('fgo'), restr = getPills('fre'), eq = getPills('feq');
       let p = `Ты персональный тренер. Создай план тренировки.\nЗАПРОС: "${q}"`;
-      if (age || gen || wt || ht) { p += '\nПАРАМЕТРЫ:'; if (age) p += `\n- Возраст: ${age}`; if (gen) p += `\n- Пол: ${gen === 'male' ? 'мужской' : 'женский'}`; if (wt) p += `\n- Вес: ${wt}кг`; if (ht) p += `\n- Рост: ${ht}см`; }
+      if (age || gen || wt || ht) { p += '\nПАРАМЕТРЫ:'; if (age) p += `\n- Возраст: ${age}`; if (gen) p += `\n- Пол: ${gen === 'male' ? 'мужской' : 'женский'}`; if (wt) p += `\n- Вес: ${wt}кг`; if (ht) p += `\n- Рост: ${ht}см` }
       if (lvl.length) p += `\n- Уровень: ${lvl.join(',')}`;
       if (goals.length) p += `\n- Цель: ${goals.join(',')}`;
       if (restr.length) p += `\n- НЕ НАГРУЖАТЬ: ${restr.join(',')}`;
       if (eq.length) p += `\n- Инвентарь: ${eq.join(',')}`;
-      p += `\n\nВерни ТОЛЬКО валидный JSON без markdown. Формат:\n{"title":"...","totalMinutes":15,"level":"Средний","focus":"...","summary":"...","tags":["тег"],"exercises":[{"name":"...","description":"...","durationSeconds":45,"reps":"10 раз","restSeconds":20,"muscles":["мышца"],"tips":"..."}]}\nСоздай 5-8 упражнений.`;
+      p += `\n\nОТВЕТ: только JSON без markdown, без \`\`\`, начиная с {.\n{"title":"...","totalMinutes":20,"level":"Средний","focus":"...","summary":"...","tags":["тег"],"exercises":[{"name":"...","description":"...","durationSeconds":45,"reps":"10 раз","restSeconds":20,"muscles":["мышца"],"tips":"..."}]}\nСоздай 5-8 упражнений.`;
       return p;
     }
 
-    // ── GENERATE ──
     async function generate() {
       const q = document.getElementById('qi').value.trim();
-      if (!q) { notif('✏️ Опиши ситуацию'); return; }
-      if (!PROXY || PROXY === 'REPLACE_WITH_YOUR_WORKER_URL') { notif('⚙️ Укажи URL прокси в index.html', 4000); return; }
-
+      if (!q) { notif('✏️ Опиши ситуацию'); return }
+      if (!PROXY || PROXY === 'REPLACE_WITH_YOUR_WORKER_URL') { notif('⚙️ Укажи URL воркера в index.html', 4000); return }
       const btn = document.getElementById('btn-gen'), btxt = document.getElementById('btn-txt'), sp = document.getElementById('sp');
       btn.disabled = true; btxt.textContent = 'Генерирую...'; sp.style.display = 'flex';
-
       try {
         const res = await fetch(PROXY, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2000,
-            system: 'You are a JSON API. Respond ONLY with a raw JSON object. No markdown, no backticks, no explanation. Start with { and end with }.',
+            system: 'Ты JSON API. Отвечай ТОЛЬКО валидным JSON объектом. Без markdown, без объяснений. Начинай с { и заканчивай }.',
             messages: [{ role: 'user', content: buildPrompt() }]
           })
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
         let raw = (data.content?.[0]?.text || '').trim();
-        raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         const m = raw.match(/\{[\s\S]*\}/); if (m) raw = m[0];
         plan = JSON.parse(raw);
         done = new Set(); activeIdx = -1;
@@ -1087,27 +1046,22 @@
         document.getElementById('plan-sec').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (e) {
         console.error(e);
-        notif('❌ ' + (e.message || 'Ошибка соединения'), 4000);
+        notif('❌ ' + (e.message.includes('Failed to fetch') ? 'Не удалось подключиться к прокси' : e.message), 4500);
       } finally {
         btn.disabled = false; btxt.textContent = '⚡ Создать план тренировки'; sp.style.display = 'none';
       }
     }
 
-    // ── RENDER ──
     function renderPlan(p) {
       document.getElementById('pl-ttl').textContent = p.title || 'Тренировка';
       const meta = document.getElementById('pl-meta'); meta.innerHTML = '';
-      [p.totalMinutes ? `⏱ ${p.totalMinutes} мин` : null, p.level, p.focus, ...(p.tags || [])].filter(Boolean).forEach(t => {
-        const e = document.createElement('div'); e.className = 'mtag'; e.textContent = t; meta.appendChild(e);
-      });
+      [p.totalMinutes ? `⏱ ${p.totalMinutes} мин` : null, p.level, p.focus, ...(p.tags || [])].filter(Boolean).forEach(t => { const e = document.createElement('div'); e.className = 'mtag'; e.textContent = t; meta.appendChild(e) });
       document.getElementById('pl-sum').textContent = p.summary || '';
       document.getElementById('done-wrap').style.display = 'none';
       resetOT(); updateOTDisp(); updateProg();
-
       const list = document.getElementById('exlist'); list.innerHTML = '';
       (p.exercises || []).forEach((ex, i) => {
-        const card = document.createElement('div');
-        card.className = 'excard'; card.id = 'ec-' + i; card.onclick = () => activateEx(i);
+        const card = document.createElement('div'); card.className = 'excard'; card.id = 'ec-' + i; card.onclick = () => activateEx(i);
         const tb = ex.durationSeconds ? `<span class="bd bd-t">⏱ ${fmt(ex.durationSeconds)}</span>` : '';
         const rb = ex.reps ? `<span class="bd bd-r">${ex.reps}</span>` : '';
         const rsb = ex.restSeconds ? `<span class="bd bd-rs">💤 ${ex.restSeconds}с</span>` : '';
@@ -1117,166 +1071,118 @@
       });
     }
 
-    // ── EXERCISE ──
-    function activateEx(idx) { if (done.has(idx)) return; document.querySelectorAll('.excard').forEach((c, i) => c.classList.toggle('act', i === idx)); activeIdx = idx; stopET(); }
-    function toggleET(idx) { const tot = plan.exercises[idx].durationSeconds || 30; if (ET.idx !== idx) { stopET(); ET.s = tot; ET.tot = tot; ET.idx = idx; ET.run = false; } ET.run ? pauseET(idx) : startET(idx); }
-    function startET(idx) { ET.run = true; ET.idx = idx; if (!OT.run) startOT(); const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '⏸ Пауза'; ET.iv = setInterval(() => { ET.s--; updateETDisp(idx); if (ET.s <= 0) { clearInterval(ET.iv); ET.run = false; completeEx(idx); } }, 1000); }
-    function pauseET(idx) { clearInterval(ET.iv); ET.run = false; const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '▶ Продолжить'; }
-    function stopET() { clearInterval(ET.iv); ET.run = false; ET.idx = -1; ET.s = 0; ET.tot = 0; }
-    function updateETDisp(idx) { const te = document.getElementById('etime-' + idx), be = document.getElementById('ebar-' + idx); if (te) te.textContent = fmt(ET.s); if (be) be.style.width = (ET.tot > 0 ? ET.s / ET.tot * 100 : 100) + '%'; }
+    function activateEx(idx) { if (done.has(idx)) return; document.querySelectorAll('.excard').forEach((c, i) => c.classList.toggle('act', i === idx)); activeIdx = idx; stopET() }
+    function toggleET(idx) { const tot = plan.exercises[idx].durationSeconds || 30; if (ET.idx !== idx) { stopET(); ET.s = tot; ET.tot = tot; ET.idx = idx; ET.run = false } ET.run ? pauseET(idx) : startET(idx) }
+    function startET(idx) { ET.run = true; ET.idx = idx; if (!OT.run) startOT(); const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '⏸ Пауза'; ET.iv = setInterval(() => { ET.s--; updateETDisp(idx); if (ET.s <= 0) { clearInterval(ET.iv); ET.run = false; completeEx(idx) } }, 1000) }
+    function pauseET(idx) { clearInterval(ET.iv); ET.run = false; const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '▶ Продолжить' }
+    function stopET() { clearInterval(ET.iv); ET.run = false; ET.idx = -1; ET.s = 0; ET.tot = 0 }
+    function updateETDisp(idx) { const te = document.getElementById('etime-' + idx), be = document.getElementById('ebar-' + idx); if (te) te.textContent = fmt(ET.s); if (be) be.style.width = (ET.tot > 0 ? ET.s / ET.tot * 100 : 100) + '%' }
     function completeEx(idx) {
       done.add(idx);
-      const c = document.getElementById('ec-' + idx); if (c) { c.classList.remove('act'); c.classList.add('done'); }
+      const c = document.getElementById('ec-' + idx); if (c) { c.classList.remove('act'); c.classList.add('done') }
       const e = document.getElementById('enum-' + idx); if (e) e.textContent = '✓';
       updateProg();
       const next = idx + 1;
-      if (plan && next < plan.exercises.length) { const rs = plan.exercises[idx].restSeconds || 20; notif(`💤 Отдых ${rs} сек`); setTimeout(() => { activateEx(next); document.getElementById('ec-' + next)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, rs * 1000); }
-      else { notif('🎉 Тренировка завершена!'); stopOT(); setTimeout(() => { const db = document.getElementById('done-wrap'); db.style.display = 'block'; db.scrollIntoView({ behavior: 'smooth' }); }, 500); }
+      if (plan && next < plan.exercises.length) { const rs = plan.exercises[idx].restSeconds || 20; notif(`💤 Отдых ${rs} сек`); setTimeout(() => { activateEx(next); document.getElementById('ec-' + next)?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, rs * 1000) }
+      else { notif('🎉 Тренировка завершена!'); stopOT(); setTimeout(() => { const db = document.getElementById('done-wrap'); db.style.display = 'block'; db.scrollIntoView({ behavior: 'smooth' }) }, 500) }
     }
-    function skipEx(idx) { stopET(); completeEx(idx); }
-    function updateProg() { if (!plan) return; const tot = (plan.exercises || []).length, dn = done.size; document.getElementById('prog-fill').style.width = (tot ? dn / tot * 100 : 0) + '%'; document.getElementById('prog-txt').textContent = dn + ' / ' + tot; }
+    function skipEx(idx) { stopET(); completeEx(idx) }
+    function updateProg() { if (!plan) return; const tot = (plan.exercises || []).length, dn = done.size; document.getElementById('prog-fill').style.width = (tot ? dn / tot * 100 : 0) + '%'; document.getElementById('prog-txt').textContent = dn + ' / ' + tot }
 
-    // ── OVERALL TIMER ──
-    function toggleOT() { OT.run ? stopOT() : startOT(); }
-    function startOT() { OT.run = true; document.getElementById('btn-ot').textContent = '⏸'; OT.iv = setInterval(() => { OT.s++; updateOTDisp(); }, 1000); }
-    function stopOT() { clearInterval(OT.iv); OT.run = false; document.getElementById('btn-ot').textContent = '▶'; }
-    function resetOT() { stopOT(); OT.s = 0; updateOTDisp(); }
-    function updateOTDisp() { document.getElementById('ot-disp').textContent = fmt(OT.s); }
+    function toggleOT() { OT.run ? stopOT() : startOT() }
+    function startOT() { OT.run = true; document.getElementById('btn-ot').textContent = '⏸'; OT.iv = setInterval(() => { OT.s++; updateOTDisp() }, 1000) }
+    function stopOT() { clearInterval(OT.iv); OT.run = false; document.getElementById('btn-ot').textContent = '▶' }
+    function resetOT() { stopOT(); OT.s = 0; updateOTDisp() }
+    function updateOTDisp() { document.getElementById('ot-disp').textContent = fmt(OT.s) }
 
-    // ── RESET ──
-    function resetPlan() { stopOT(); stopET(); plan = null; done = new Set(); activeIdx = -1; document.getElementById('plan-sec').style.display = 'none'; document.getElementById('qi').value = ''; document.getElementById('qcnt').textContent = '0/300'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function resetPlan() { stopOT(); stopET(); plan = null; done = new Set(); activeIdx = -1; document.getElementById('plan-sec').style.display = 'none'; document.getElementById('qi').value = ''; document.getElementById('qcnt').textContent = '0/300'; window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
-    // ── EXPORT PDF (jsPDF) ──
     function exportPDF() {
       if (!plan) return;
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-      const W = 190, ml = 10, lh = 7;
-      let y = 20;
 
-      // Title
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(20);
-      doc.setTextColor(15, 52, 96);
-      doc.text(plan.title || 'Тренировка', ml, y); y += 10;
-
-      // Meta
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      const meta = [plan.totalMinutes ? plan.totalMinutes + ' мин' : '', plan.level || '', plan.focus || ''].filter(Boolean).join('  ·  ');
-      doc.text(meta, ml, y); y += 8;
-
-      // Summary box
-      if (plan.summary) {
-        doc.setFillColor(240, 247, 255);
-        const lines = doc.splitTextToSize(plan.summary, W - 4);
-        const bh = lines.length * lh + 6;
-        doc.roundedRect(ml, y, W, bh, 2, 2, 'F');
-        doc.setTextColor(30, 60, 100);
-        doc.setFontSize(10);
-        doc.text(lines, ml + 2, y + 5);
-        y += bh + 6;
-      }
-
-      // Exercises
-      (plan.exercises || []).forEach((ex, i) => {
-        if (y > 260) { doc.addPage(); y = 20; }
-
-        // Card background
-        const titleLines = doc.splitTextToSize(ex.name, W - 20);
-        const descLines = doc.splitTextToSize(ex.description || '', W - 20);
-        const tipLines = ex.tips ? doc.splitTextToSize('💡 ' + ex.tips, W - 20) : [];
-        const cardH = 8 + titleLines.length * lh + descLines.length * 5.5 + (tipLines.length ? tipLines.length * 5.5 + 3 : 0) + 10;
-
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(ml, y, W, cardH, 2, 2, 'F');
-        doc.setDrawColor(220, 220, 220);
-        doc.roundedRect(ml, y, W, cardH, 2, 2, 'S');
-
-        // Number badge
-        doc.setFillColor(15, 52, 96);
-        doc.roundedRect(ml + 2, y + 2, 7, 7, 1, 1, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(255, 255, 255);
-        doc.text(String(i + 1), ml + 5.5, y + 7, { align: 'center' });
-
-        // Exercise name
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(15, 52, 96);
-        doc.text(titleLines, ml + 11, y + 7);
-
-        let iy = y + 7 + titleLines.length * lh;
-
-        // Description
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(80, 80, 80);
-        doc.text(descLines, ml + 11, iy); iy += descLines.length * 5.5;
-
-        // Badges inline
+      const exercises = (plan.exercises || []).map((ex, i) => {
         const badges = [
-          ex.durationSeconds ? fmt(ex.durationSeconds) : null,
-          ex.reps || null,
-          ex.restSeconds ? `отдых ${ex.restSeconds}с` : null,
+          ex.durationSeconds ? `⏱ ${fmt(ex.durationSeconds)}` : '',
+          ex.reps || '',
+          ex.restSeconds ? `💤 отдых ${ex.restSeconds} сек` : '',
           ...(ex.muscles || []).slice(0, 2)
         ].filter(Boolean);
-        if (badges.length) {
-          doc.setFontSize(8);
-          let bx = ml + 11;
-          badges.forEach(b => {
-            const bw = doc.getTextWidth(b) + 4;
-            doc.setFillColor(235, 242, 255);
-            doc.roundedRect(bx, iy, bw, 5, 1, 1, 'F');
-            doc.setTextColor(50, 80, 140);
-            doc.text(b, bx + 2, iy + 3.5);
-            bx += bw + 3;
-          });
-          iy += 8;
-        }
 
-        // Tips
-        if (tipLines.length) {
-          doc.setFont('helvetica', 'italic');
-          doc.setFontSize(8.5);
-          doc.setTextColor(45, 122, 79);
-          doc.text(tipLines, ml + 11, iy);
-        }
+        return `
+      <div class="ex-card">
+        <div class="ex-header">
+          <div class="ex-num">${i + 1}</div>
+          <div class="ex-title">${ex.name}</div>
+        </div>
+        <div class="ex-desc">${ex.description || ''}</div>
+        ${badges.length ? `<div class="ex-badges">${badges.map(b => `<span class="badge">${b}</span>`).join('')}</div>` : ''}
+        ${ex.tips ? `<div class="ex-tip">💡 ${ex.tips}</div>` : ''}
+      </div>`;
+      }).join('');
 
-        y += cardH + 4;
-      });
+      const meta = [
+        plan.totalMinutes ? `${plan.totalMinutes} мин` : '',
+        plan.level || '',
+        plan.focus || ''
+      ].filter(Boolean).join(' · ');
 
-      // Footer
-      if (y > 270) { doc.addPage(); y = 20; }
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(160, 160, 160);
-      doc.text('WorkoutNow  ·  ' + new Date().toLocaleDateString('ru-RU'), 105, 290, { align: 'center' });
+      const html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>${plan.title || 'Тренировка'}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Inter', Arial, sans-serif; color: #1a1a2e; background: #fff; padding: 32px 40px; font-size: 13px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 700; color: #0f3460; margin-bottom: 4px; }
+  .meta { color: #666; font-size: 12px; margin-bottom: 14px; }
+  .summary { background: #f0f7ff; border-left: 3px solid #0f3460; padding: 10px 14px; border-radius: 4px; margin-bottom: 20px; font-size: 12px; color: #2a4070; line-height: 1.6; }
+  .ex-card { border: 1px solid #e8ecf0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fafbfc; page-break-inside: avoid; }
+  .ex-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .ex-num { width: 24px; height: 24px; background: #0f3460; color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .ex-title { font-size: 14px; font-weight: 600; color: #0f3460; }
+  .ex-desc { color: #555; font-size: 12px; margin-bottom: 8px; padding-left: 34px; }
+  .ex-badges { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 34px; margin-bottom: 6px; }
+  .badge { background: #e8f0fe; color: #3a5ca8; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 500; }
+  .ex-tip { color: #2d7a4f; font-size: 11px; font-style: italic; padding-left: 34px; }
+  .footer { margin-top: 28px; text-align: center; color: #aaa; font-size: 11px; border-top: 1px solid #eee; padding-top: 12px; }
+  @media print {
+    body { padding: 20px 28px; }
+    @page { margin: 15mm 15mm; }
+  }
+</style>
+</head>
+<body>
+  <h1>${plan.title || 'Тренировка'}</h1>
+  <div class="meta">${meta}</div>
+  ${plan.summary ? `<div class="summary">${plan.summary}</div>` : ''}
+  ${exercises}
+  <div class="footer">WorkoutNow &nbsp;·&nbsp; ${new Date().toLocaleDateString('ru-RU')}</div>
+  <script>window.onload=function(){window.print()}<\/script>
+</body>
+</html>`;
 
-      doc.save((plan.title || 'workout').replace(/\s+/g, '-').toLowerCase() + '.pdf');
-      notif('✅ PDF сохранён!');
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, '_blank');
+      if (!w) notif('⚠️ Разреши всплывающие окна в браузере', 4000);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      notif('📄 Откроется окно → Печать → Сохранить как PDF');
     }
 
-    // ── EXPORT TXT ──
     function exportTxt() {
       if (!plan) return;
       let t = `Тренировка: ${plan.title || ''}\n`;
       if (plan.totalMinutes) t += `Время: ${plan.totalMinutes} мин | ${plan.level || ''} | ${plan.focus || ''}\n\n`;
       if (plan.summary) t += plan.summary + '\n\n';
       t += 'УПРАЖНЕНИЯ:\n';
-      (plan.exercises || []).forEach((ex, i) => {
-        t += `\n${i + 1}. ${ex.name}\n   ${ex.description || ''}\n`;
-        const d = [ex.durationSeconds ? fmt(ex.durationSeconds) : '', ex.reps || '', ex.restSeconds ? `отдых ${ex.restSeconds}с` : ''].filter(Boolean);
-        if (d.length) t += `   ${d.join(' · ')}\n`;
-        if (ex.tips) t += `   Совет: ${ex.tips}\n`;
-      });
+      (plan.exercises || []).forEach((ex, i) => { t += `\n${i + 1}. ${ex.name}\n   ${ex.description || ''}\n`; const d = [ex.durationSeconds ? fmt(ex.durationSeconds) : '', ex.reps || '', ex.restSeconds ? `отдых ${ex.restSeconds}с` : ''].filter(Boolean); if (d.length) t += `   ${d.join(' · ')}\n`; if (ex.tips) t += `   Совет: ${ex.tips}\n` });
       t += `\nWorkoutNow · ${new Date().toLocaleDateString('ru-RU')}`;
       navigator.clipboard.writeText(t).then(() => notif('✅ Скопировано!')).catch(() => notif('❌ Не удалось скопировать'));
     }
 
-    document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+    document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate() });
   </script>
 </body>
 
