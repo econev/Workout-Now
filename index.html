@@ -1,1574 +1,1283 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WorkoutNow — Тренировка здесь и сейчас</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #080c10;
-    --surface: rgba(255,255,255,0.04);
-    --surface-hover: rgba(255,255,255,0.07);
-    --glass: rgba(255,255,255,0.06);
-    --glass-border: rgba(255,255,255,0.10);
-    --glass-strong: rgba(255,255,255,0.11);
-    --text: #f0f4f8;
-    --text-muted: rgba(240,244,248,0.45);
-    --text-dim: rgba(240,244,248,0.25);
-    --accent: #a8ff78;
-    --accent-dim: rgba(168,255,120,0.15);
-    --accent-glow: rgba(168,255,120,0.08);
-    --danger: #ff6b6b;
-    --warn: #ffd166;
-    --info: #74b9ff;
-    --radius: 20px;
-    --radius-sm: 12px;
-    --blur: blur(24px);
-    --shadow: 0 8px 40px rgba(0,0,0,0.5);
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  /* NOISE OVERLAY */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.6;
-  }
-
-  /* AMBIENT GLOW */
-  .ambient {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(100px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .ambient-1 { width: 500px; height: 500px; background: rgba(168,255,120,0.04); top: -200px; right: -100px; }
-  .ambient-2 { width: 400px; height: 400px; background: rgba(116,185,255,0.03); bottom: 0; left: -100px; }
-
-  .container {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 0 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* HEADER */
-  header {
-    padding: 32px 0 24px;
-    text-align: center;
-  }
-
-  .logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(168,255,120,0.3);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 20px;
-    letter-spacing: -0.5px;
-  }
-
-  .logo-text span { color: var(--accent); }
-
-  header p {
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 300;
-  }
-
-  /* GLASS CARD */
-  .glass-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
-    padding: 20px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-
-  /* QUICK INPUT */
-  .quick-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 10px;
-    display: block;
-  }
-
-  .quick-input-wrap {
-    position: relative;
-  }
-
-  textarea.quick-input {
-    width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 300;
-    padding: 14px 16px;
-    resize: none;
-    outline: none;
-    min-height: 80px;
-    transition: border-color 0.2s, background 0.2s;
-    line-height: 1.6;
-  }
-
-  textarea.quick-input::placeholder { color: var(--text-dim); }
-  textarea.quick-input:focus {
-    border-color: rgba(168,255,120,0.35);
-    background: rgba(168,255,120,0.03);
-  }
-
-  /* EXAMPLES */
-  .examples {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .example-chip {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 100px;
-    padding: 5px 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .example-chip:hover, .example-chip:active {
-    background: var(--accent-dim);
-    border-color: rgba(168,255,120,0.3);
-    color: var(--accent);
-  }
-
-  /* ADVANCED TOGGLE */
-  .advanced-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    padding: 12px 0 4px;
-    user-select: none;
-  }
-
-  .advanced-toggle-text {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 400;
-  }
-
-  .toggle-icon {
-    width: 16px; height: 16px;
-    color: var(--text-dim);
-    transition: transform 0.3s;
-    flex-shrink: 0;
-  }
-
-  .toggle-icon.open { transform: rotate(180deg); }
-
-  /* ADVANCED FILTERS */
-  .advanced-section {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .advanced-section.open { max-height: 900px; }
-
-  .advanced-inner {
-    padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 12px;
-  }
-
-  .filters-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .filter-group.full { grid-column: 1 / -1; }
-
-  .filter-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-  }
-
-  .filter-input, .filter-select {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color 0.2s;
-    width: 100%;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-
-  .filter-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(240,244,248,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-    cursor: pointer;
-  }
-
-  .filter-select option { background: #1a1f28; color: var(--text); }
-
-  .filter-input:focus, .filter-select:focus {
-    border-color: rgba(168,255,120,0.3);
-  }
-
-  .filter-input::placeholder { color: var(--text-dim); }
-
-  /* PILLS / MULTI SELECT */
-  .pills-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .pill {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 100px;
-    padding: 6px 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    user-select: none;
-  }
-
-  .pill.active {
-    background: var(--accent-dim);
-    border-color: rgba(168,255,120,0.4);
-    color: var(--accent);
-  }
-
-  /* GENERATE BUTTON */
-  .btn-generate {
-    width: 100%;
-    padding: 16px;
-    background: rgba(168,255,120,0.12);
-    border: 1px solid rgba(168,255,120,0.3);
-    border-radius: var(--radius-sm);
-    color: var(--accent);
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 14px;
-    box-shadow: 0 0 30px rgba(168,255,120,0.05);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-generate::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(168,255,120,0.0);
-    transition: background 0.2s;
-  }
-
-  .btn-generate:hover::before, .btn-generate:active::before {
-    background: rgba(168,255,120,0.06);
-  }
-
-  .btn-generate:active { transform: scale(0.99); }
-
-  .btn-generate.loading {
-    pointer-events: none;
-    opacity: 0.7;
-  }
-
-  /* SPINNER */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(168,255,120,0.2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-
-  /* PLAN SECTION */
-  #plan-section { display: none; margin-bottom: 24px; }
-  #plan-section.visible { display: block; animation: fadeUp 0.5s ease; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .plan-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    gap: 12px;
-  }
-
-  .plan-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-  }
-
-  .plan-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
-
-  .meta-tag {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 100px;
-    padding: 3px 10px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .plan-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .btn-icon {
-    width: 38px; height: 38px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text-muted);
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  .btn-icon:hover, .btn-icon:active {
-    background: rgba(255,255,255,0.09);
-    color: var(--text);
-  }
-
-  /* OVERALL TIMER */
-  .overall-timer {
-    background: rgba(168,255,120,0.05);
-    border: 1px solid rgba(168,255,120,0.12);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-
-  .timer-info { display: flex; flex-direction: column; gap: 2px; }
-  .timer-label { font-size: 11px; color: var(--text-muted); font-weight: 400; text-transform: uppercase; letter-spacing: 1px; }
-  .timer-display {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -1px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .timer-controls { display: flex; gap: 8px; }
-
-  .btn-timer {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    border: 1px solid rgba(168,255,120,0.25);
-    background: rgba(168,255,120,0.08);
-    color: var(--accent);
-    font-size: 14px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .btn-timer:hover, .btn-timer:active { background: rgba(168,255,120,0.15); }
-
-  /* EXERCISE CARDS */
-  .exercises-list { display: flex; flex-direction: column; gap: 10px; }
-
-  .exercise-card {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: var(--radius-sm);
-    padding: 14px;
-    transition: all 0.2s;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .exercise-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: rgba(168,255,120,0.0);
-    transition: background 0.2s;
-  }
-
-  .exercise-card.active {
-    background: rgba(168,255,120,0.05);
-    border-color: rgba(168,255,120,0.2);
-  }
-
-  .exercise-card.active::before { background: var(--accent); }
-
-  .exercise-card.done {
-    opacity: 0.45;
-  }
-
-  .exercise-card.done .ex-title { text-decoration: line-through; }
-
-  .exercise-top {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .ex-num {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    transition: all 0.2s;
-  }
-
-  .exercise-card.active .ex-num {
-    background: var(--accent-dim);
-    border-color: rgba(168,255,120,0.3);
-    color: var(--accent);
-  }
-
-  .ex-content { flex: 1; min-width: 0; }
-
-  .ex-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 2px;
-    line-height: 1.3;
-  }
-
-  .ex-desc {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: 300;
-    line-height: 1.5;
-  }
-
-  .ex-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 8px;
-  }
-
-  .badge {
-    padding: 3px 8px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 500;
-    border: 1px solid;
-  }
-
-  .badge-time { background: rgba(116,185,255,0.1); border-color: rgba(116,185,255,0.2); color: var(--info); }
-  .badge-reps { background: rgba(255,209,102,0.1); border-color: rgba(255,209,102,0.2); color: var(--warn); }
-  .badge-rest { background: rgba(255,107,107,0.1); border-color: rgba(255,107,107,0.2); color: var(--danger); }
-  .badge-muscle { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-muted); }
-
-  /* EXERCISE TIMER */
-  .ex-timer-wrap {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    display: none;
-  }
-
-  .exercise-card.active .ex-timer-wrap { display: block; }
-
-  .ex-timer-bar-bg {
-    height: 3px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 2px;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-
-  .ex-timer-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    width: 100%;
-    transition: width 1s linear;
-  }
-
-  .ex-timer-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .ex-timer-time {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .ex-timer-btns { display: flex; gap: 6px; }
-
-  .btn-sm {
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 8px;
-    border: 1px solid;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .btn-sm-green {
-    background: rgba(168,255,120,0.1);
-    border-color: rgba(168,255,120,0.25);
-    color: var(--accent);
-  }
-
-  .btn-sm-green:hover { background: rgba(168,255,120,0.18); }
-
-  .btn-sm-muted {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.1);
-    color: var(--text-muted);
-  }
-
-  .btn-sm-muted:hover { background: rgba(255,255,255,0.08); }
-
-  /* EXPORT BUTTONS */
-  .export-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 14px;
-  }
-
-  .btn-export {
-    padding: 12px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-  }
-
-  .btn-export:hover, .btn-export:active {
-    background: rgba(255,255,255,0.08);
-    color: var(--text);
-    border-color: rgba(255,255,255,0.15);
-  }
-
-  /* SUMMARY BOX */
-  .plan-summary {
-    background: rgba(168,255,120,0.04);
-    border: 1px solid rgba(168,255,120,0.1);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.7;
-    font-weight: 300;
-  }
-
-  /* REST CARD */
-  .rest-card {
-    background: rgba(255,107,107,0.05);
-    border: 1px solid rgba(255,107,107,0.12);
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-    color: rgba(255,107,107,0.8);
-  }
-
-  .rest-icon { font-size: 14px; }
-
-  /* ERROR / EMPTY STATE */
-  .error-msg {
-    text-align: center;
-    padding: 32px 16px;
-    color: var(--text-muted);
-    font-size: 14px;
-  }
-
-  .error-msg .emoji { font-size: 32px; margin-bottom: 12px; display: block; }
-
-  /* PROGRESS */
-  .progress-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
-  .progress-bar-bg {
-    flex: 1;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .progress-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.4s ease;
-  }
-
-  .progress-text {
-    font-size: 12px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* COMPLETION */
-  .completion-banner {
-    text-align: center;
-    padding: 24px 16px;
-    display: none;
-  }
-
-  .completion-banner.visible { display: block; animation: fadeUp 0.5s ease; }
-
-  .completion-banner .big-emoji { font-size: 48px; margin-bottom: 12px; display: block; }
-
-  .completion-banner h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-
-  .completion-banner p { font-size: 14px; color: var(--text-muted); }
-
-  /* FOOTER */
-  footer {
-    text-align: center;
-    padding: 24px 16px 40px;
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-
-  /* SECTION HEADING */
-  .section-heading {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 12px;
-  }
-
-  /* NOTIFICATION */
-  .notif {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: rgba(30,36,46,0.95);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius-sm);
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--text);
-    backdrop-filter: var(--blur);
-    z-index: 1000;
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-
-  .notif.show { transform: translateX(-50%) translateY(0); }
-
-  /* MOBILE TWEAKS */
-  @media (max-width: 480px) {
-    .filters-grid { grid-template-columns: 1fr 1fr; }
-    .timer-display { font-size: 24px; }
-    header { padding: 24px 0 18px; }
-    .export-row { grid-template-columns: 1fr 1fr; }
-  }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-  /* PULSE ANIMATION FOR ACTIVE EXERCISE */
-  @keyframes pulse-border {
-    0%, 100% { border-color: rgba(168,255,120,0.2); }
-    50% { border-color: rgba(168,255,120,0.45); }
-  }
-
-  .exercise-card.active { animation: pulse-border 2s ease-in-out infinite; }
-
-  /* INPUT CHAR COUNTER */
-  .char-counter {
-    position: absolute;
-    right: 12px;
-    bottom: 10px;
-    font-size: 11px;
-    color: var(--text-dim);
-    pointer-events: none;
-  }
-</style>
-</head>
-<body>
-
-<div class="ambient ambient-1"></div>
-<div class="ambient ambient-2"></div>
-
-<div class="container">
-
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      <div class="logo-icon">⚡</div>
-      <div class="logo-text">Workout<span>Now</span></div>
-    </div>
-    <p>Скажи что есть — получи тренировку</p>
-  </header>
-
-  <!-- INPUT CARD -->
-  <div class="glass-card" id="input-card">
-    <span class="quick-label">Опиши ситуацию</span>
-
-    <div class="quick-input-wrap">
-      <textarea class="quick-input" id="quick-input" maxlength="300"
-        placeholder="У меня есть 15 минут, стул, болит спина..."></textarea>
-      <span class="char-counter" id="char-counter">0/300</span>
-    </div>
-
-    <div class="examples">
-      <div class="example-chip" onclick="setExample('15 минут, только стул, болит поясница')">💺 Стул + поясница</div>
-      <div class="example-chip" onclick="setExample('30 минут, дома без инвентаря, хочу кардио')">🏠 Дома без всего</div>
-      <div class="example-chip" onclick="setExample('10 минут, офис, сидячая работа, шея затекла')">💼 Офис, шея</div>
-      <div class="example-chip" onclick="setExample('20 минут, коврик для йоги, хочу растяжку')">🧘 Растяжка</div>
-      <div class="example-chip" onclick="setExample('45 минут, гантели 10 кг, полная тренировка тела')">🏋️ Гантели дома</div>
-    </div>
-
-    <!-- ADVANCED -->
-    <div class="advanced-toggle" onclick="toggleAdvanced()">
-      <svg class="toggle-icon" id="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M6 9l6 6 6-6"/>
-      </svg>
-      <span class="advanced-toggle-text">Расширенные параметры</span>
-    </div>
-
-    <div class="advanced-section" id="advanced-section">
-      <div class="advanced-inner">
-
-        <div class="filters-grid">
-          <div class="filter-group">
-            <label class="filter-label">Возраст</label>
-            <input class="filter-input" id="f-age" type="number" placeholder="25" min="10" max="100">
-          </div>
-          <div class="filter-group">
-            <label class="filter-label">Пол</label>
-            <select class="filter-select" id="f-gender">
-              <option value="">Не указан</option>
-              <option value="male">Мужской</option>
-              <option value="female">Женский</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label class="filter-label">Вес (кг)</label>
-            <input class="filter-input" id="f-weight" type="number" placeholder="70" min="30" max="300">
-          </div>
-          <div class="filter-group">
-            <label class="filter-label">Рост (см)</label>
-            <input class="filter-input" id="f-height" type="number" placeholder="175" min="100" max="250">
-          </div>
-        </div>
-
-        <div class="filter-group" style="margin-bottom:10px">
-          <label class="filter-label">Уровень подготовки</label>
-          <div class="pills-wrap" id="f-level">
-            <div class="pill" data-val="beginner" onclick="togglePill(this,'f-level')">🌱 Новичок</div>
-            <div class="pill active" data-val="intermediate" onclick="togglePill(this,'f-level')">⚡ Средний</div>
-            <div class="pill" data-val="advanced" onclick="togglePill(this,'f-level')">🔥 Продвинутый</div>
-          </div>
-        </div>
-
-        <div class="filter-group" style="margin-bottom:10px">
-          <label class="filter-label">Цель</label>
-          <div class="pills-wrap" id="f-goal">
-            <div class="pill" data-val="strength" onclick="togglePill(this,'f-goal')">💪 Сила</div>
-            <div class="pill" data-val="cardio" onclick="togglePill(this,'f-goal')">❤️ Кардио</div>
-            <div class="pill active" data-val="flexibility" onclick="togglePill(this,'f-goal')">🧘 Гибкость</div>
-            <div class="pill" data-val="weightloss" onclick="togglePill(this,'f-goal')">⚖️ Похудение</div>
-          </div>
-        </div>
-
-        <div class="filter-group" style="margin-bottom:10px">
-          <label class="filter-label">Что болит / ограничения</label>
-          <div class="pills-wrap" id="f-restrictions">
-            <div class="pill" data-val="back" onclick="togglePill(this,'f-restrictions')">🔴 Спина</div>
-            <div class="pill" data-val="knees" onclick="togglePill(this,'f-restrictions')">🔴 Колени</div>
-            <div class="pill" data-val="shoulders" onclick="togglePill(this,'f-restrictions')">🔴 Плечи</div>
-            <div class="pill" data-val="neck" onclick="togglePill(this,'f-restrictions')">🔴 Шея</div>
-            <div class="pill" data-val="wrists" onclick="togglePill(this,'f-restrictions')">🔴 Запястья</div>
-          </div>
-        </div>
-
-        <div class="filter-group">
-          <label class="filter-label">Доступный инвентарь</label>
-          <div class="pills-wrap" id="f-equipment">
-            <div class="pill" data-val="none" onclick="togglePill(this,'f-equipment')">🚫 Ничего</div>
-            <div class="pill" data-val="mat" onclick="togglePill(this,'f-equipment')">🧘 Коврик</div>
-            <div class="pill" data-val="chair" onclick="togglePill(this,'f-equipment')">💺 Стул</div>
-            <div class="pill" data-val="dumbbells" onclick="togglePill(this,'f-equipment')">🏋️ Гантели</div>
-            <div class="pill" data-val="bands" onclick="togglePill(this,'f-equipment')">🎀 Резинки</div>
-            <div class="pill" data-val="pullupbar" onclick="togglePill(this,'f-equipment')">🔩 Турник</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <button class="btn-generate" id="btn-generate" onclick="generatePlan()">
-      <span id="btn-text">⚡ Создать план тренировки</span>
-      <div class="spinner" id="spinner" style="display:none"></div>
-    </button>
-  </div>
-
-  <!-- PLAN SECTION -->
-  <div id="plan-section">
-
-    <!-- PLAN HEADER -->
-    <div class="glass-card">
-      <div class="plan-header">
-        <div>
-          <div class="plan-title" id="plan-title">Тренировка</div>
-          <div class="plan-meta" id="plan-meta"></div>
-        </div>
-        <div class="plan-actions">
-          <div class="btn-icon" onclick="resetPlan()" title="Новый план">↺</div>
-        </div>
-      </div>
-
-      <!-- OVERALL TIMER -->
-      <div class="overall-timer">
-        <div class="timer-info">
-          <span class="timer-label">Общее время</span>
-          <span class="timer-display" id="overall-timer">00:00</span>
-        </div>
-        <div class="timer-controls">
-          <button class="btn-timer" id="btn-overall-play" onclick="toggleOverallTimer()" title="Старт/Пауза">▶</button>
-          <button class="btn-timer" onclick="resetOverallTimer()" title="Сброс">⟲</button>
-        </div>
-      </div>
-
-      <!-- PROGRESS -->
-      <div class="progress-row">
-        <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
-        <span class="progress-text" id="progress-text">0 / 0</span>
-      </div>
-
-      <!-- SUMMARY -->
-      <div class="plan-summary" id="plan-summary"></div>
-
-      <!-- EXPORT -->
-      <div class="export-row">
-        <button class="btn-export" onclick="exportPDF()">📄 Скачать PDF</button>
-        <button class="btn-export" onclick="exportText()">📋 Скопировать</button>
-      </div>
-    </div>
-
-    <!-- EXERCISES LIST -->
-    <div class="exercises-list" id="exercises-list"></div>
-
-    <!-- COMPLETION -->
-    <div class="completion-banner" id="completion-banner">
-      <span class="big-emoji">🎉</span>
-      <h3>Отличная работа!</h3>
-      <p>Ты завершил тренировку. Тело скажет спасибо.</p>
-    </div>
-
-  </div>
-
-</div>
-
-<footer>WorkoutNow · AI-powered · Работает без регистрации</footer>
-
-<!-- NOTIFICATION -->
-<div class="notif" id="notif"></div>
-
-<script>
-// ==============================
-// STATE
-// ==============================
-let currentPlan = null;
-let overallTimer = { interval: null, seconds: 0, running: false };
-let exTimer = { interval: null, seconds: 0, total: 0, running: false, cardIdx: -1 };
-let advancedOpen = false;
-let doneExercises = new Set();
-
-// ==============================
-// CHAR COUNTER
-// ==============================
-document.getElementById('quick-input').addEventListener('input', function() {
-  document.getElementById('char-counter').textContent = this.value.length + '/300';
-});
-
-// ==============================
-// EXAMPLES
-// ==============================
-function setExample(text) {
-  document.getElementById('quick-input').value = text;
-  document.getElementById('char-counter').textContent = text.length + '/300';
-}
-
-// ==============================
-// ADVANCED TOGGLE
-// ==============================
-function toggleAdvanced() {
-  advancedOpen = !advancedOpen;
-  document.getElementById('advanced-section').classList.toggle('open', advancedOpen);
-  document.getElementById('toggle-icon').classList.toggle('open', advancedOpen);
-}
-
-// ==============================
-// PILLS
-// ==============================
-function togglePill(el, groupId) {
-  // For level - single select; for others - multi
-  if (groupId === 'f-level') {
-    document.querySelectorAll(`#${groupId} .pill`).forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-  } else {
-    el.classList.toggle('active');
-  }
-}
-
-function getActivePills(groupId) {
-  return Array.from(document.querySelectorAll(`#${groupId} .pill.active`)).map(p => p.dataset.val);
-}
-
-// ==============================
-// BUILD PROMPT
-// ==============================
-function buildPrompt() {
-  const quickText = document.getElementById('quick-input').value.trim();
-  const age = document.getElementById('f-age').value;
-  const gender = document.getElementById('f-gender').value;
-  const weight = document.getElementById('f-weight').value;
-  const height = document.getElementById('f-height').value;
-  const level = getActivePills('f-level');
-  const goals = getActivePills('f-goal');
-  const restrictions = getActivePills('f-restrictions');
-  const equipment = getActivePills('f-equipment');
-
-  let prompt = `Ты персональный тренер. Создай структурированный план тренировки на основе запроса пользователя.
-
-ЗАПРОС: "${quickText}"
-`;
-
-  if (age || gender || weight || height) {
-    prompt += `\nПАРАМЕТРЫ ПОЛЬЗОВАТЕЛЯ:`;
-    if (age) prompt += `\n- Возраст: ${age} лет`;
-    if (gender) prompt += `\n- Пол: ${gender === 'male' ? 'мужской' : 'женский'}`;
-    if (weight) prompt += `\n- Вес: ${weight} кг`;
-    if (height) prompt += `\n- Рост: ${height} см`;
-  }
-
-  if (level.length) prompt += `\n- Уровень: ${level.join(', ')}`;
-  if (goals.length) prompt += `\n- Цель: ${goals.join(', ')}`;
-  if (restrictions.length) prompt += `\n- Ограничения/боли: ${restrictions.join(', ')} — избегай нагрузки на эти зоны`;
-  if (equipment.length) prompt += `\n- Инвентарь: ${equipment.join(', ')}`;
-
-  prompt += `
-
-ВАЖНО: Верни ТОЛЬКО JSON, без markdown, без объяснений, без \`\`\`.
-
-JSON формат:
-{
-  "title": "Название тренировки (2-4 слова)",
-  "totalMinutes": число,
-  "level": "Новичок|Средний|Продвинутый",
-  "focus": "напр. Спина и растяжка",
-  "summary": "2-3 предложения про тренировку и её пользу для пользователя",
-  "tags": ["тег1", "тег2", "тег3"],
-  "exercises": [
-    {
-      "name": "Название упражнения",
-      "description": "Краткое описание техники выполнения (1-2 предложения)",
-      "durationSeconds": число (время выполнения в секундах, 30-120),
-      "reps": "напр. 10-12 раз или null",
-      "restSeconds": число (отдых после в секундах, 15-45),
-      "muscles": ["мышца1", "мышца2"],
-      "tips": "Короткий совет по технике"
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WorkoutNow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"
+    rel="stylesheet">
+
+  <!-- jsPDF для экспорта -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* ── RESET ── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent
     }
-  ]
-}
 
-Создай 5-9 упражнений, учитывая: доступное время, ограничения по здоровью, уровень подготовки. Упражнения должны быть реальными, безопасными и подходящими под описанный контекст.`;
+    html {
+      scroll-behavior: smooth
+    }
 
-  return prompt;
-}
+    /* ── VARIABLES ── */
+    :root {
+      --bg: #080c10;
+      --glass: rgba(255, 255, 255, 0.055);
+      --gb: rgba(255, 255, 255, 0.09);
+      --t: #f0f4f8;
+      --tm: rgba(240, 244, 248, 0.45);
+      --td: rgba(240, 244, 248, 0.22);
+      --acc: #a8ff78;
+      --adim: rgba(168, 255, 120, 0.14);
+      --abrd: rgba(168, 255, 120, 0.3);
+      --info: #74b9ff;
+      --warn: #ffd166;
+      --danger: #ff7070;
+      --r: 18px;
+      --rs: 11px;
+      --sh: 0 8px 40px rgba(0, 0, 0, 0.55);
+    }
 
-// ==============================
-// GENERATE PLAN
-// ==============================
-async function generatePlan() {
-  const quickText = document.getElementById('quick-input').value.trim();
-  if (!quickText) {
-    showNotif('✏️ Опиши свою ситуацию');
-    document.getElementById('quick-input').focus();
-    return;
-  }
+    /* ── BASE ── */
+    body {
+      background: var(--bg);
+      color: var(--t);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 15px;
+      line-height: 1.5;
+    }
 
-  const btn = document.getElementById('btn-generate');
-  const btnText = document.getElementById('btn-text');
-  const spinner = document.getElementById('spinner');
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 80% -10%, rgba(168, 255, 120, 0.035) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at -10% 90%, rgba(116, 185, 255, 0.025) 0%, transparent 70%);
+    }
 
-  btn.classList.add('loading');
-  btnText.textContent = 'Генерирую план...';
-  spinner.style.display = 'flex';
+    .wrap {
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 0 14px 48px;
+      position: relative;
+      z-index: 1
+    }
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: 'You are a JSON API. You must ALWAYS respond with valid JSON only. No prose, no markdown, no code fences, no explanation. Just the raw JSON object starting with { and ending with }.',
-        messages: [{ role: 'user', content: buildPrompt() }]
-      })
+    /* ── HEADER ── */
+    .hdr {
+      text-align: center;
+      padding: 32px 0 22px
+    }
+
+    .site-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -.5px;
+      margin-bottom: 6px
+    }
+
+    .site-name span {
+      color: var(--acc)
+    }
+
+    .hdr p {
+      color: var(--tm);
+      font-size: 13px;
+      font-weight: 300
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--gb);
+      border-radius: var(--r);
+      padding: 18px;
+      margin-bottom: 11px;
+      box-shadow: var(--sh);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* ── LABELS ── */
+    .lbl {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--acc);
+      margin-bottom: 9px;
+      display: block
+    }
+
+    .flbl {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--tm);
+      letter-spacing: .4px;
+      margin-bottom: 4px;
+      display: block
+    }
+
+    /* ── TEXTAREA ── */
+    .qi-wrap {
+      position: relative
+    }
+
+    .qi {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--gb);
+      border-radius: var(--rs);
+      color: var(--t);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      padding: 12px 14px 28px;
+      resize: none;
+      outline: none;
+      min-height: 80px;
+      line-height: 1.6;
+      transition: border-color .2s
+    }
+
+    .qi::placeholder {
+      color: var(--td)
+    }
+
+    .qi:focus {
+      border-color: var(--abrd);
+      background: rgba(168, 255, 120, 0.025)
+    }
+
+    .qi-cnt {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      font-size: 10px;
+      color: var(--td);
+      pointer-events: none
+    }
+
+    /* ── CHIPS ── */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 9px
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 100px;
+      padding: 4px 11px;
+      font-size: 11px;
+      color: var(--tm);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      user-select: none
+    }
+
+    .chip:hover,
+    .chip:active {
+      background: var(--adim);
+      border-color: var(--abrd);
+      color: var(--acc)
+    }
+
+    /* ── ADVANCED ── */
+    .adv-tog {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      padding: 11px 0 3px;
+      user-select: none
+    }
+
+    .adv-tog span {
+      font-size: 12px;
+      color: var(--tm)
+    }
+
+    .adv-arr {
+      width: 14px;
+      height: 14px;
+      color: var(--td);
+      transition: transform .3s;
+      flex-shrink: 0
+    }
+
+    .adv-arr.open {
+      transform: rotate(180deg)
+    }
+
+    .adv-sec {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .42s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .adv-sec.open {
+      max-height: 1100px
+    }
+
+    .adv-inner {
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.055);
+      margin-top: 11px
+    }
+
+    /* ── FORM ── */
+    .fg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-bottom: 9px
+    }
+
+    .fgroup {
+      display: flex;
+      flex-direction: column;
+      gap: 4px
+    }
+
+    .fi,
+    .fs {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--rs);
+      color: var(--t);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 9px 11px;
+      outline: none;
+      width: 100%;
+      transition: border-color .2s;
+      appearance: none;
+      -webkit-appearance: none
+    }
+
+    .fs {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(240,244,248,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      cursor: pointer
+    }
+
+    .fs option {
+      background: #1a1f28;
+      color: var(--t)
+    }
+
+    .fi::placeholder {
+      color: var(--td)
+    }
+
+    .fi:focus,
+    .fs:focus {
+      border-color: var(--abrd)
+    }
+
+    /* ── PILLS ── */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 100px;
+      padding: 5px 11px;
+      font-size: 11px;
+      color: var(--tm);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none
+    }
+
+    .pill.on {
+      background: var(--adim);
+      border-color: var(--abrd);
+      color: var(--acc)
+    }
+
+    /* ── GENERATE BTN ── */
+    .btn-gen {
+      width: 100%;
+      padding: 15px;
+      background: rgba(168, 255, 120, 0.1);
+      border: 1px solid rgba(168, 255, 120, 0.28);
+      border-radius: var(--rs);
+      color: var(--acc);
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: .4px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 13px
+    }
+
+    .btn-gen:hover {
+      background: rgba(168, 255, 120, 0.17)
+    }
+
+    .btn-gen:active {
+      transform: scale(.99)
+    }
+
+    .btn-gen:disabled {
+      opacity: .6;
+      pointer-events: none
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .sp {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(168, 255, 120, 0.2);
+      border-top-color: var(--acc);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0
+    }
+
+    /* ── PLAN ── */
+    .plan-hdr {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 10px
+    }
+
+    .plan-ttl {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 700
+    }
+
+    .plan-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px
+    }
+
+    .mtag {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 100px;
+      padding: 2px 9px;
+      font-size: 10px;
+      color: var(--tm)
+    }
+
+    .btn-reset {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--tm);
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: all .2s
+    }
+
+    .btn-reset:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--t)
+    }
+
+    /* ── OVERALL TIMER ── */
+    .ot {
+      background: rgba(168, 255, 120, 0.045);
+      border: 1px solid rgba(168, 255, 120, 0.11);
+      border-radius: var(--rs);
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 13px
+    }
+
+    .ot-lbl {
+      font-size: 10px;
+      color: var(--tm);
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      margin-bottom: 2px
+    }
+
+    .ot-disp {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--acc);
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .ot-ctrls {
+      display: flex;
+      gap: 7px
+    }
+
+    .btn-t {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(168, 255, 120, 0.28);
+      background: rgba(168, 255, 120, 0.1);
+      color: var(--acc);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s
+    }
+
+    .btn-t:hover {
+      background: rgba(168, 255, 120, 0.22)
+    }
+
+    /* ── PROGRESS ── */
+    .prog-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px
+    }
+
+    .prog-bg {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.055);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      background: var(--acc);
+      border-radius: 2px;
+      transition: width .4s ease;
+      width: 0%
+    }
+
+    .prog-txt {
+      font-size: 11px;
+      color: var(--tm);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums
+    }
+
+    /* ── SUMMARY ── */
+    .sum {
+      background: rgba(168, 255, 120, 0.035);
+      border: 1px solid rgba(168, 255, 120, 0.09);
+      border-radius: var(--rs);
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--tm);
+      line-height: 1.7;
+      font-weight: 300;
+      margin-bottom: 13px
+    }
+
+    /* ── EXPORT ── */
+    .exp-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 13px
+    }
+
+    .btn-exp {
+      padding: 11px 14px;
+      border-radius: var(--rs);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--tm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all .2s
+    }
+
+    .btn-exp:hover {
+      background: rgba(255, 255, 255, 0.075);
+      color: var(--t)
+    }
+
+    /* ── EXERCISES ── */
+    .exlist {
+      display: flex;
+      flex-direction: column;
+      gap: 9px
+    }
+
+    @keyframes pb {
+
+      0%,
+      100% {
+        border-color: rgba(168, 255, 120, 0.18)
+      }
+
+      50% {
+        border-color: rgba(168, 255, 120, 0.45)
+      }
+    }
+
+    .excard {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.065);
+      border-left: 3px solid transparent;
+      border-radius: var(--rs);
+      padding: 13px;
+      cursor: pointer;
+      transition: background .2s
+    }
+
+    .excard:hover {
+      background: rgba(255, 255, 255, 0.05)
+    }
+
+    .excard.act {
+      background: rgba(168, 255, 120, 0.045);
+      border-color: rgba(168, 255, 120, 0.18);
+      border-left-color: var(--acc);
+      animation: pb 2s ease-in-out infinite
+    }
+
+    .excard.done {
+      opacity: .38;
+      cursor: default
+    }
+
+    .excard.done .ex-ttl {
+      text-decoration: line-through
+    }
+
+    .extop {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px
+    }
+
+    .exnum {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--tm);
+      transition: all .2s
+    }
+
+    .excard.act .exnum {
+      background: var(--adim);
+      border-color: var(--abrd);
+      color: var(--acc)
+    }
+
+    .excnt {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ex-ttl {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      line-height: 1.3
+    }
+
+    .ex-dsc {
+      font-size: 11px;
+      color: var(--tm);
+      font-weight: 300;
+      line-height: 1.5
+    }
+
+    .ex-bds {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 7px
+    }
+
+    .bd {
+      padding: 2px 7px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 500;
+      border: 1px solid
+    }
+
+    .bd-t {
+      background: rgba(116, 185, 255, 0.09);
+      border-color: rgba(116, 185, 255, 0.2);
+      color: var(--info)
+    }
+
+    .bd-r {
+      background: rgba(255, 209, 102, 0.09);
+      border-color: rgba(255, 209, 102, 0.2);
+      color: var(--warn)
+    }
+
+    .bd-rs {
+      background: rgba(255, 112, 112, 0.09);
+      border-color: rgba(255, 112, 112, 0.2);
+      color: var(--danger)
+    }
+
+    .bd-m {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.09);
+      color: var(--tm)
+    }
+
+    .ex-tip {
+      font-size: 11px;
+      margin-top: 5px;
+      color: rgba(168, 255, 120, 0.55);
+      font-weight: 300
+    }
+
+    /* ── EXERCISE TIMER ── */
+    .ext-wrap {
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(255, 255, 255, 0.055);
+      display: none
+    }
+
+    .excard.act .ext-wrap {
+      display: block
+    }
+
+    .ext-bar-bg {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.055);
+      border-radius: 2px;
+      margin-bottom: 7px;
+      overflow: hidden
+    }
+
+    .ext-bar {
+      height: 100%;
+      background: var(--acc);
+      border-radius: 2px;
+      transition: width 1s linear;
+      width: 100%
+    }
+
+    .ext-bot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .ext-time {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--acc);
+      letter-spacing: -.4px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .ext-btns {
+      display: flex;
+      gap: 5px
+    }
+
+    .btsm {
+      height: 30px;
+      padding: 0 11px;
+      border-radius: 7px;
+      border: 1px solid;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap
+    }
+
+    .btsm-g {
+      background: rgba(168, 255, 120, 0.09);
+      border-color: rgba(168, 255, 120, 0.22);
+      color: var(--acc)
+    }
+
+    .btsm-g:hover {
+      background: rgba(168, 255, 120, 0.18)
+    }
+
+    .btsm-m {
+      background: rgba(255, 255, 255, 0.035);
+      border-color: rgba(255, 255, 255, 0.09);
+      color: var(--tm)
+    }
+
+    .btsm-m:hover {
+      background: rgba(255, 255, 255, 0.08)
+    }
+
+    /* ── DONE BANNER ── */
+    .done-ban {
+      text-align: center;
+      padding: 22px 14px
+    }
+
+    .done-ban .de {
+      font-size: 42px;
+      margin-bottom: 10px;
+      display: block
+    }
+
+    .done-ban h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .done-ban p {
+      font-size: 13px;
+      color: var(--tm)
+    }
+
+    /* ── NOTIFICATION ── */
+    .notif {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: rgba(22, 28, 38, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: var(--rs);
+      padding: 11px 18px;
+      font-size: 12px;
+      color: var(--t);
+      z-index: 999;
+      transition: transform .32s cubic-bezier(.34, 1.56, .64, 1);
+      white-space: nowrap;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      pointer-events: none
+    }
+
+    .notif.show {
+      transform: translateX(-50%) translateY(0)
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 8px 0 0;
+      font-size: 11px;
+      color: var(--td)
+    }
+
+    @keyframes fup {
+      from {
+        opacity: 0;
+        transform: translateY(14px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fup {
+      animation: fup .45s ease
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="hdr">
+      <div class="site-name">Workout<span>Now</span></div>
+      <p>Скажи что есть — получи тренировку</p>
+    </header>
+
+    <!-- INPUT CARD -->
+    <div class="card" id="input-card">
+      <span class="lbl">Опиши ситуацию</span>
+      <div class="qi-wrap">
+        <textarea class="qi" id="qi" maxlength="300"
+          placeholder="У меня есть 15 минут, стул, болит спина..."></textarea>
+        <span class="qi-cnt" id="qcnt">0/300</span>
+      </div>
+
+      <div class="chips">
+        <div class="chip" onclick="setEx('15 минут, только стул, болит поясница')">💺 Стул + поясница</div>
+        <div class="chip" onclick="setEx('30 минут, дома без инвентаря, хочу кардио')">🏠 Дома без всего</div>
+        <div class="chip" onclick="setEx('10 минут, офис, сидячая работа, шея затекла')">💼 Офис, шея</div>
+        <div class="chip" onclick="setEx('20 минут, коврик для йоги, хочу растяжку')">🧘 Растяжка</div>
+        <div class="chip" onclick="setEx('45 минут, гантели 10 кг, полная тренировка тела')">🏋️ Гантели дома</div>
+      </div>
+
+      <!-- ADVANCED -->
+      <div class="adv-tog" onclick="toggleAdv()">
+        <svg class="adv-arr" id="adv-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+        <span>Расширенные параметры</span>
+      </div>
+      <div class="adv-sec" id="adv-sec">
+        <div class="adv-inner">
+          <div class="fg">
+            <div class="fgroup"><label class="flbl">Возраст</label><input class="fi" id="fa" type="number"
+                placeholder="25" min="10" max="100"></div>
+            <div class="fgroup"><label class="flbl">Пол</label>
+              <select class="fs" id="fgender">
+                <option value="">Не указан</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
+            </div>
+            <div class="fgroup"><label class="flbl">Вес (кг)</label><input class="fi" id="fw" type="number"
+                placeholder="70" min="30" max="300"></div>
+            <div class="fgroup"><label class="flbl">Рост (см)</label><input class="fi" id="fh" type="number"
+                placeholder="175" min="100" max="250"></div>
+          </div>
+          <div class="fgroup" style="margin-bottom:9px"><label class="flbl" style="margin-bottom:5px">Уровень</label>
+            <div class="pills" id="fl">
+              <div class="pill" data-v="beginner" onclick="togglePill(this,'fl',true)">🌱 Новичок</div>
+              <div class="pill on" data-v="intermediate" onclick="togglePill(this,'fl',true)">⚡ Средний</div>
+              <div class="pill" data-v="advanced" onclick="togglePill(this,'fl',true)">🔥 Продвинутый</div>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-bottom:9px"><label class="flbl" style="margin-bottom:5px">Цель</label>
+            <div class="pills" id="fgo">
+              <div class="pill" data-v="strength" onclick="togglePill(this,'fgo',false)">💪 Сила</div>
+              <div class="pill" data-v="cardio" onclick="togglePill(this,'fgo',false)">❤️ Кардио</div>
+              <div class="pill on" data-v="flexibility" onclick="togglePill(this,'fgo',false)">🧘 Гибкость</div>
+              <div class="pill" data-v="weightloss" onclick="togglePill(this,'fgo',false)">⚖️ Похудение</div>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-bottom:9px"><label class="flbl"
+              style="margin-bottom:5px">Ограничения</label>
+            <div class="pills" id="fre">
+              <div class="pill" data-v="back" onclick="togglePill(this,'fre',false)">🔴 Спина</div>
+              <div class="pill" data-v="knees" onclick="togglePill(this,'fre',false)">🔴 Колени</div>
+              <div class="pill" data-v="shoulders" onclick="togglePill(this,'fre',false)">🔴 Плечи</div>
+              <div class="pill" data-v="neck" onclick="togglePill(this,'fre',false)">🔴 Шея</div>
+              <div class="pill" data-v="wrists" onclick="togglePill(this,'fre',false)">🔴 Запястья</div>
+            </div>
+          </div>
+          <div class="fgroup"><label class="flbl" style="margin-bottom:5px">Инвентарь</label>
+            <div class="pills" id="feq">
+              <div class="pill" data-v="none" onclick="togglePill(this,'feq',false)">🚫 Ничего</div>
+              <div class="pill" data-v="mat" onclick="togglePill(this,'feq',false)">🧘 Коврик</div>
+              <div class="pill" data-v="chair" onclick="togglePill(this,'feq',false)">💺 Стул</div>
+              <div class="pill" data-v="dumbbells" onclick="togglePill(this,'feq',false)">🏋️ Гантели</div>
+              <div class="pill" data-v="bands" onclick="togglePill(this,'feq',false)">🎀 Резинки</div>
+              <div class="pill" data-v="pullupbar" onclick="togglePill(this,'feq',false)">🔩 Турник</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-gen" id="btn-gen" onclick="generate()">
+        <span id="btn-txt">⚡ Создать план тренировки</span>
+        <div class="sp" id="sp" style="display:none"></div>
+      </button>
+    </div>
+
+    <!-- PLAN SECTION -->
+    <div id="plan-sec" style="display:none">
+
+      <div class="card fup">
+        <div class="plan-hdr">
+          <div>
+            <div class="plan-ttl" id="pl-ttl">Тренировка</div>
+            <div class="plan-meta" id="pl-meta"></div>
+          </div>
+          <div class="btn-reset" onclick="resetPlan()">↺</div>
+        </div>
+
+        <div class="ot">
+          <div>
+            <div class="ot-lbl">Общее время</div>
+            <div class="ot-disp" id="ot-disp">00:00</div>
+          </div>
+          <div class="ot-ctrls">
+            <button class="btn-t" id="btn-ot" onclick="toggleOT()">▶</button>
+            <button class="btn-t" onclick="resetOT()">⟲</button>
+          </div>
+        </div>
+
+        <div class="prog-row">
+          <div class="prog-bg">
+            <div class="prog-fill" id="prog-fill"></div>
+          </div>
+          <span class="prog-txt" id="prog-txt">0 / 0</span>
+        </div>
+
+        <div class="sum" id="pl-sum"></div>
+
+        <div class="exp-row">
+          <button class="btn-exp" onclick="exportPDF()">📄 Скачать PDF</button>
+          <button class="btn-exp" onclick="exportTxt()">📋 Скопировать</button>
+        </div>
+      </div>
+
+      <div class="exlist" id="exlist"></div>
+
+      <div id="done-wrap" style="display:none" class="card fup">
+        <div class="done-ban">
+          <span class="de">🎉</span>
+          <h3>Отличная работа!</h3>
+          <p>Тренировка завершена. Тело скажет спасибо.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>WorkoutNow · AI-powered · Без регистрации</footer>
+  <div class="notif" id="notif"></div>
+
+  <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🔧 ПОСЛЕ ДЕПЛОЯ WORKER — ВСТАВЬ СЮДА ЕГО URL:
+    const PROXY = "https://lingering-sound-50f9.conevgadget.workers.dev/";
+    // Пример: const PROXY = "workoutnow.conevgadget.workers.dev";
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    let plan = null, done = new Set(), activeIdx = -1;
+    let OT = { iv: null, s: 0, run: false };
+    let ET = { iv: null, s: 0, tot: 0, run: false, idx: -1 };
+    let advOpen = false;
+
+    // ── INPUT ──
+    document.getElementById('qi').addEventListener('input', function () {
+      document.getElementById('qcnt').textContent = this.value.length + '/300';
     });
+    function setEx(t) { document.getElementById('qi').value = t; document.getElementById('qcnt').textContent = t.length + '/300'; }
 
-    const data = await response.json();
+    // ── UTILS ──
+    function fmt(s) { s = Math.max(0, s || 0); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+    let _nt;
+    function notif(msg, dur = 3000) { const el = document.getElementById('notif'); el.textContent = msg; el.classList.add('show'); clearTimeout(_nt); _nt = setTimeout(() => el.classList.remove('show'), dur); }
 
-    // Check for API-level errors
-    if (data.error) {
-      throw new Error(`API error: ${data.error.message || JSON.stringify(data.error)}`);
+    // ── ADVANCED ──
+    function toggleAdv() {
+      advOpen = !advOpen;
+      document.getElementById('adv-sec').classList.toggle('open', advOpen);
+      document.getElementById('adv-arr').classList.toggle('open', advOpen);
+    }
+    function togglePill(el, gid, single) {
+      if (single) { document.querySelectorAll('#' + gid + ' .pill').forEach(p => p.classList.remove('on')); el.classList.add('on'); }
+      else { el.classList.toggle('on'); }
+    }
+    function getPills(gid) { return Array.from(document.querySelectorAll('#' + gid + ' .pill.on')).map(p => p.dataset.v); }
+
+    // ── PROMPT ──
+    function buildPrompt() {
+      const q = document.getElementById('qi').value.trim();
+      const age = document.getElementById('fa').value, gen = document.getElementById('fgender').value;
+      const wt = document.getElementById('fw').value, ht = document.getElementById('fh').value;
+      const lvl = getPills('fl'), goals = getPills('fgo'), restr = getPills('fre'), eq = getPills('feq');
+      let p = `Ты персональный тренер. Создай план тренировки.\nЗАПРОС: "${q}"`;
+      if (age || gen || wt || ht) { p += '\nПАРАМЕТРЫ:'; if (age) p += `\n- Возраст: ${age}`; if (gen) p += `\n- Пол: ${gen === 'male' ? 'мужской' : 'женский'}`; if (wt) p += `\n- Вес: ${wt}кг`; if (ht) p += `\n- Рост: ${ht}см`; }
+      if (lvl.length) p += `\n- Уровень: ${lvl.join(',')}`;
+      if (goals.length) p += `\n- Цель: ${goals.join(',')}`;
+      if (restr.length) p += `\n- НЕ НАГРУЖАТЬ: ${restr.join(',')}`;
+      if (eq.length) p += `\n- Инвентарь: ${eq.join(',')}`;
+      p += `\n\nВерни ТОЛЬКО валидный JSON без markdown. Формат:\n{"title":"...","totalMinutes":15,"level":"Средний","focus":"...","summary":"...","tags":["тег"],"exercises":[{"name":"...","description":"...","durationSeconds":45,"reps":"10 раз","restSeconds":20,"muscles":["мышца"],"tips":"..."}]}\nСоздай 5-8 упражнений.`;
+      return p;
     }
 
-    const raw = data.content?.[0]?.text || '';
-    console.log('Raw AI response:', raw); // debug
+    // ── GENERATE ──
+    async function generate() {
+      const q = document.getElementById('qi').value.trim();
+      if (!q) { notif('✏️ Опиши ситуацию'); return; }
+      if (!PROXY || PROXY === 'REPLACE_WITH_YOUR_WORKER_URL') { notif('⚙️ Укажи URL прокси в index.html', 4000); return; }
 
-    let plan;
-    try {
-      // Try multiple extraction strategies
-      let jsonStr = raw.trim();
+      const btn = document.getElementById('btn-gen'), btxt = document.getElementById('btn-txt'), sp = document.getElementById('sp');
+      btn.disabled = true; btxt.textContent = 'Генерирую...'; sp.style.display = 'flex';
 
-      // Strategy 1: remove code fences
-      jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-
-      // Strategy 2: extract first {...} block
-      const match = jsonStr.match(/\{[\s\S]*\}/);
-      if (match) jsonStr = match[0];
-
-      plan = JSON.parse(jsonStr);
-    } catch (e) {
-      console.error('Parse error. Raw was:', raw);
-      throw new Error(`Не удалось разобрать ответ AI. Raw: ${raw.slice(0, 200)}`);
+      try {
+        const res = await fetch(PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2000,
+            system: 'You are a JSON API. Respond ONLY with a raw JSON object. No markdown, no backticks, no explanation. Start with { and end with }.',
+            messages: [{ role: 'user', content: buildPrompt() }]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        let raw = (data.content?.[0]?.text || '').trim();
+        raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const m = raw.match(/\{[\s\S]*\}/); if (m) raw = m[0];
+        plan = JSON.parse(raw);
+        done = new Set(); activeIdx = -1;
+        renderPlan(plan);
+        document.getElementById('plan-sec').style.display = 'block';
+        document.getElementById('plan-sec').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) {
+        console.error(e);
+        notif('❌ ' + (e.message || 'Ошибка соединения'), 4000);
+      } finally {
+        btn.disabled = false; btxt.textContent = '⚡ Создать план тренировки'; sp.style.display = 'none';
+      }
     }
 
-    currentPlan = plan;
-    doneExercises.clear();
-    renderPlan(plan);
+    // ── RENDER ──
+    function renderPlan(p) {
+      document.getElementById('pl-ttl').textContent = p.title || 'Тренировка';
+      const meta = document.getElementById('pl-meta'); meta.innerHTML = '';
+      [p.totalMinutes ? `⏱ ${p.totalMinutes} мин` : null, p.level, p.focus, ...(p.tags || [])].filter(Boolean).forEach(t => {
+        const e = document.createElement('div'); e.className = 'mtag'; e.textContent = t; meta.appendChild(e);
+      });
+      document.getElementById('pl-sum').textContent = p.summary || '';
+      document.getElementById('done-wrap').style.display = 'none';
+      resetOT(); updateOTDisp(); updateProg();
 
-    document.getElementById('plan-section').classList.add('visible');
-    document.getElementById('plan-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
-    console.error('Generation error:', err);
-    const msg = err.message?.includes('API error') ? '❌ Ошибка API. Проверь ключ.' :
-                err.message?.includes('разобрать') ? '❌ AI вернул неверный формат. Попробуй ещё раз.' :
-                '❌ Нет соединения. Попробуй ещё раз.';
-    showNotif(msg, 4000);
-  } finally {
-    btn.classList.remove('loading');
-    btnText.textContent = '⚡ Создать план тренировки';
-    spinner.style.display = 'none';
-  }
-}
-
-// ==============================
-// RENDER PLAN
-// ==============================
-function renderPlan(plan) {
-  // Title + meta
-  document.getElementById('plan-title').textContent = plan.title || 'Тренировка';
-  const meta = document.getElementById('plan-meta');
-  meta.innerHTML = '';
-  const tags = [
-    plan.totalMinutes ? `⏱ ${plan.totalMinutes} мин` : null,
-    plan.level || null,
-    plan.focus || null,
-    ...(plan.tags || [])
-  ].filter(Boolean);
-  tags.forEach(t => {
-    const el = document.createElement('div');
-    el.className = 'meta-tag';
-    el.textContent = t;
-    meta.appendChild(el);
-  });
-
-  // Summary
-  document.getElementById('plan-summary').textContent = plan.summary || '';
-
-  // Progress
-  updateProgress();
-
-  // Exercises
-  const list = document.getElementById('exercises-list');
-  list.innerHTML = '';
-
-  (plan.exercises || []).forEach((ex, i) => {
-    const card = document.createElement('div');
-    card.className = 'exercise-card';
-    card.id = `ex-card-${i}`;
-    card.onclick = () => activateExercise(i);
-
-    const musclesBadges = (ex.muscles || []).slice(0, 2).map(m =>
-      `<span class="badge badge-muscle">${m}</span>`).join('');
-
-    const timeBadge = ex.durationSeconds
-      ? `<span class="badge badge-time">⏱ ${formatTime(ex.durationSeconds)}</span>` : '';
-    const repsBadge = ex.reps
-      ? `<span class="badge badge-reps">${ex.reps}</span>` : '';
-    const restBadge = ex.restSeconds
-      ? `<span class="badge badge-rest">💤 ${ex.restSeconds}с отдых</span>` : '';
-
-    card.innerHTML = `
-      <div class="exercise-top">
-        <div class="ex-num">${i + 1}</div>
-        <div class="ex-content">
-          <div class="ex-title">${ex.name}</div>
-          <div class="ex-desc">${ex.description || ''}</div>
-          <div class="ex-badges">
-            ${timeBadge}${repsBadge}${restBadge}${musclesBadges}
-          </div>
-          ${ex.tips ? `<div class="ex-desc" style="margin-top:6px;color:rgba(168,255,120,0.6)">💡 ${ex.tips}</div>` : ''}
-        </div>
-      </div>
-      <div class="ex-timer-wrap">
-        <div class="ex-timer-bar-bg"><div class="ex-timer-bar" id="ex-bar-${i}"></div></div>
-        <div class="ex-timer-bottom">
-          <span class="ex-timer-time" id="ex-time-${i}">${formatTime(ex.durationSeconds || 30)}</span>
-          <div class="ex-timer-btns">
-            <button class="btn-sm btn-sm-muted" onclick="event.stopPropagation();skipExercise(${i})">Пропустить</button>
-            <button class="btn-sm btn-sm-green" id="ex-btn-${i}" onclick="event.stopPropagation();toggleExerciseTimer(${i})">▶ Старт</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    list.appendChild(card);
-  });
-
-  // Reset timers
-  stopOverallTimer();
-  overallTimer.seconds = 0;
-  updateOverallDisplay();
-  document.getElementById('completion-banner').classList.remove('visible');
-}
-
-// ==============================
-// EXERCISE ACTIVATION
-// ==============================
-function activateExercise(idx) {
-  document.querySelectorAll('.exercise-card').forEach((c, i) => {
-    c.classList.toggle('active', i === idx);
-  });
-  stopExTimer();
-}
-
-// ==============================
-// EXERCISE TIMER
-// ==============================
-function toggleExerciseTimer(idx) {
-  const ex = currentPlan.exercises[idx];
-  const totalSec = ex.durationSeconds || 30;
-
-  if (exTimer.cardIdx !== idx) {
-    stopExTimer();
-    exTimer.seconds = totalSec;
-    exTimer.total = totalSec;
-    exTimer.cardIdx = idx;
-    exTimer.running = false;
-  }
-
-  if (exTimer.running) {
-    pauseExTimer(idx);
-  } else {
-    startExTimer(idx, totalSec);
-  }
-}
-
-function startExTimer(idx, total) {
-  exTimer.running = true;
-  exTimer.cardIdx = idx;
-  if (!exTimer.total) exTimer.total = total;
-
-  const btn = document.getElementById(`ex-btn-${idx}`);
-  if (btn) btn.textContent = '⏸ Пауза';
-
-  // Also start overall if not running
-  if (!overallTimer.running) startOverallTimer();
-
-  exTimer.interval = setInterval(() => {
-    exTimer.seconds--;
-    updateExTimerDisplay(idx);
-    if (exTimer.seconds <= 0) {
-      clearInterval(exTimer.interval);
-      exTimer.running = false;
-      completeExercise(idx);
+      const list = document.getElementById('exlist'); list.innerHTML = '';
+      (p.exercises || []).forEach((ex, i) => {
+        const card = document.createElement('div');
+        card.className = 'excard'; card.id = 'ec-' + i; card.onclick = () => activateEx(i);
+        const tb = ex.durationSeconds ? `<span class="bd bd-t">⏱ ${fmt(ex.durationSeconds)}</span>` : '';
+        const rb = ex.reps ? `<span class="bd bd-r">${ex.reps}</span>` : '';
+        const rsb = ex.restSeconds ? `<span class="bd bd-rs">💤 ${ex.restSeconds}с</span>` : '';
+        const mb = (ex.muscles || []).slice(0, 2).map(m => `<span class="bd bd-m">${m}</span>`).join('');
+        card.innerHTML = `<div class="extop"><div class="exnum" id="enum-${i}">${i + 1}</div><div class="excnt"><div class="ex-ttl">${ex.name}</div><div class="ex-dsc">${ex.description || ''}</div><div class="ex-bds">${tb}${rb}${rsb}${mb}</div>${ex.tips ? `<div class="ex-tip">💡 ${ex.tips}</div>` : ''}</div></div><div class="ext-wrap" id="etw-${i}"><div class="ext-bar-bg"><div class="ext-bar" id="ebar-${i}"></div></div><div class="ext-bot"><span class="ext-time" id="etime-${i}">${fmt(ex.durationSeconds || 30)}</span><div class="ext-btns"><button class="btsm btsm-m" onclick="event.stopPropagation();skipEx(${i})">Пропустить</button><button class="btsm btsm-g" id="ebtn-${i}" onclick="event.stopPropagation();toggleET(${i})">▶ Старт</button></div></div></div>`;
+        list.appendChild(card);
+      });
     }
-  }, 1000);
-}
 
-function pauseExTimer(idx) {
-  clearInterval(exTimer.interval);
-  exTimer.running = false;
-  const btn = document.getElementById(`ex-btn-${idx}`);
-  if (btn) btn.textContent = '▶ Продолжить';
-}
+    // ── EXERCISE ──
+    function activateEx(idx) { if (done.has(idx)) return; document.querySelectorAll('.excard').forEach((c, i) => c.classList.toggle('act', i === idx)); activeIdx = idx; stopET(); }
+    function toggleET(idx) { const tot = plan.exercises[idx].durationSeconds || 30; if (ET.idx !== idx) { stopET(); ET.s = tot; ET.tot = tot; ET.idx = idx; ET.run = false; } ET.run ? pauseET(idx) : startET(idx); }
+    function startET(idx) { ET.run = true; ET.idx = idx; if (!OT.run) startOT(); const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '⏸ Пауза'; ET.iv = setInterval(() => { ET.s--; updateETDisp(idx); if (ET.s <= 0) { clearInterval(ET.iv); ET.run = false; completeEx(idx); } }, 1000); }
+    function pauseET(idx) { clearInterval(ET.iv); ET.run = false; const b = document.getElementById('ebtn-' + idx); if (b) b.textContent = '▶ Продолжить'; }
+    function stopET() { clearInterval(ET.iv); ET.run = false; ET.idx = -1; ET.s = 0; ET.tot = 0; }
+    function updateETDisp(idx) { const te = document.getElementById('etime-' + idx), be = document.getElementById('ebar-' + idx); if (te) te.textContent = fmt(ET.s); if (be) be.style.width = (ET.tot > 0 ? ET.s / ET.tot * 100 : 100) + '%'; }
+    function completeEx(idx) {
+      done.add(idx);
+      const c = document.getElementById('ec-' + idx); if (c) { c.classList.remove('act'); c.classList.add('done'); }
+      const e = document.getElementById('enum-' + idx); if (e) e.textContent = '✓';
+      updateProg();
+      const next = idx + 1;
+      if (plan && next < plan.exercises.length) { const rs = plan.exercises[idx].restSeconds || 20; notif(`💤 Отдых ${rs} сек`); setTimeout(() => { activateEx(next); document.getElementById('ec-' + next)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, rs * 1000); }
+      else { notif('🎉 Тренировка завершена!'); stopOT(); setTimeout(() => { const db = document.getElementById('done-wrap'); db.style.display = 'block'; db.scrollIntoView({ behavior: 'smooth' }); }, 500); }
+    }
+    function skipEx(idx) { stopET(); completeEx(idx); }
+    function updateProg() { if (!plan) return; const tot = (plan.exercises || []).length, dn = done.size; document.getElementById('prog-fill').style.width = (tot ? dn / tot * 100 : 0) + '%'; document.getElementById('prog-txt').textContent = dn + ' / ' + tot; }
 
-function stopExTimer() {
-  clearInterval(exTimer.interval);
-  exTimer.running = false;
-  exTimer.cardIdx = -1;
-  exTimer.seconds = 0;
-  exTimer.total = 0;
-}
+    // ── OVERALL TIMER ──
+    function toggleOT() { OT.run ? stopOT() : startOT(); }
+    function startOT() { OT.run = true; document.getElementById('btn-ot').textContent = '⏸'; OT.iv = setInterval(() => { OT.s++; updateOTDisp(); }, 1000); }
+    function stopOT() { clearInterval(OT.iv); OT.run = false; document.getElementById('btn-ot').textContent = '▶'; }
+    function resetOT() { stopOT(); OT.s = 0; updateOTDisp(); }
+    function updateOTDisp() { document.getElementById('ot-disp').textContent = fmt(OT.s); }
 
-function updateExTimerDisplay(idx) {
-  const timeEl = document.getElementById(`ex-time-${idx}`);
-  const barEl = document.getElementById(`ex-bar-${idx}`);
-  if (timeEl) timeEl.textContent = formatTime(exTimer.seconds);
-  if (barEl) {
-    const pct = exTimer.total > 0 ? (exTimer.seconds / exTimer.total * 100) : 100;
-    barEl.style.width = pct + '%';
-  }
-}
+    // ── RESET ──
+    function resetPlan() { stopOT(); stopET(); plan = null; done = new Set(); activeIdx = -1; document.getElementById('plan-sec').style.display = 'none'; document.getElementById('qi').value = ''; document.getElementById('qcnt').textContent = '0/300'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-function completeExercise(idx) {
-  doneExercises.add(idx);
-  const card = document.getElementById(`ex-card-${idx}`);
-  if (card) {
-    card.classList.remove('active');
-    card.classList.add('done');
-  }
+    // ── EXPORT PDF (jsPDF) ──
+    function exportPDF() {
+      if (!plan) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const W = 190, ml = 10, lh = 7;
+      let y = 20;
 
-  const btn = document.getElementById(`ex-btn-${idx}`);
-  if (btn) btn.textContent = '✓ Готово';
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(15, 52, 96);
+      doc.text(plan.title || 'Тренировка', ml, y); y += 10;
 
-  updateProgress();
+      // Meta
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const meta = [plan.totalMinutes ? plan.totalMinutes + ' мин' : '', plan.level || '', plan.focus || ''].filter(Boolean).join('  ·  ');
+      doc.text(meta, ml, y); y += 8;
 
-  // Auto-advance
-  const next = idx + 1;
-  if (next < currentPlan.exercises.length) {
-    const ex = currentPlan.exercises[idx];
-    const restSec = ex.restSeconds || 20;
-    showNotif(`💤 Отдых ${restSec} с`);
-    setTimeout(() => {
-      activateExercise(next);
-      document.getElementById(`ex-card-${next}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, restSec * 1000);
-  } else {
-    showNotif('🎉 Тренировка завершена!');
-    stopOverallTimer();
-    setTimeout(() => {
-      document.getElementById('completion-banner').classList.add('visible');
-      document.getElementById('completion-banner').scrollIntoView({ behavior: 'smooth' });
-    }, 500);
-  }
-}
+      // Summary box
+      if (plan.summary) {
+        doc.setFillColor(240, 247, 255);
+        const lines = doc.splitTextToSize(plan.summary, W - 4);
+        const bh = lines.length * lh + 6;
+        doc.roundedRect(ml, y, W, bh, 2, 2, 'F');
+        doc.setTextColor(30, 60, 100);
+        doc.setFontSize(10);
+        doc.text(lines, ml + 2, y + 5);
+        y += bh + 6;
+      }
 
-function skipExercise(idx) {
-  stopExTimer();
-  completeExercise(idx);
-}
+      // Exercises
+      (plan.exercises || []).forEach((ex, i) => {
+        if (y > 260) { doc.addPage(); y = 20; }
 
-// ==============================
-// PROGRESS
-// ==============================
-function updateProgress() {
-  if (!currentPlan) return;
-  const total = (currentPlan.exercises || []).length;
-  const done = doneExercises.size;
-  const pct = total > 0 ? (done / total * 100) : 0;
-  document.getElementById('progress-bar').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = `${done} / ${total}`;
-}
+        // Card background
+        const titleLines = doc.splitTextToSize(ex.name, W - 20);
+        const descLines = doc.splitTextToSize(ex.description || '', W - 20);
+        const tipLines = ex.tips ? doc.splitTextToSize('💡 ' + ex.tips, W - 20) : [];
+        const cardH = 8 + titleLines.length * lh + descLines.length * 5.5 + (tipLines.length ? tipLines.length * 5.5 + 3 : 0) + 10;
 
-// ==============================
-// OVERALL TIMER
-// ==============================
-function toggleOverallTimer() {
-  if (overallTimer.running) stopOverallTimer();
-  else startOverallTimer();
-}
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(ml, y, W, cardH, 2, 2, 'F');
+        doc.setDrawColor(220, 220, 220);
+        doc.roundedRect(ml, y, W, cardH, 2, 2, 'S');
 
-function startOverallTimer() {
-  overallTimer.running = true;
-  document.getElementById('btn-overall-play').textContent = '⏸';
-  overallTimer.interval = setInterval(() => {
-    overallTimer.seconds++;
-    updateOverallDisplay();
-  }, 1000);
-}
+        // Number badge
+        doc.setFillColor(15, 52, 96);
+        doc.roundedRect(ml + 2, y + 2, 7, 7, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(i + 1), ml + 5.5, y + 7, { align: 'center' });
 
-function stopOverallTimer() {
-  clearInterval(overallTimer.interval);
-  overallTimer.running = false;
-  document.getElementById('btn-overall-play').textContent = '▶';
-}
+        // Exercise name
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(15, 52, 96);
+        doc.text(titleLines, ml + 11, y + 7);
 
-function resetOverallTimer() {
-  stopOverallTimer();
-  overallTimer.seconds = 0;
-  updateOverallDisplay();
-}
+        let iy = y + 7 + titleLines.length * lh;
 
-function updateOverallDisplay() {
-  document.getElementById('overall-timer').textContent = formatTime(overallTimer.seconds);
-}
+        // Description
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.text(descLines, ml + 11, iy); iy += descLines.length * 5.5;
 
-// ==============================
-// RESET
-// ==============================
-function resetPlan() {
-  stopOverallTimer();
-  stopExTimer();
-  currentPlan = null;
-  doneExercises.clear();
-  document.getElementById('plan-section').classList.remove('visible');
-  document.getElementById('quick-input').value = '';
-  document.getElementById('char-counter').textContent = '0/300';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+        // Badges inline
+        const badges = [
+          ex.durationSeconds ? fmt(ex.durationSeconds) : null,
+          ex.reps || null,
+          ex.restSeconds ? `отдых ${ex.restSeconds}с` : null,
+          ...(ex.muscles || []).slice(0, 2)
+        ].filter(Boolean);
+        if (badges.length) {
+          doc.setFontSize(8);
+          let bx = ml + 11;
+          badges.forEach(b => {
+            const bw = doc.getTextWidth(b) + 4;
+            doc.setFillColor(235, 242, 255);
+            doc.roundedRect(bx, iy, bw, 5, 1, 1, 'F');
+            doc.setTextColor(50, 80, 140);
+            doc.text(b, bx + 2, iy + 3.5);
+            bx += bw + 3;
+          });
+          iy += 8;
+        }
 
-// ==============================
-// EXPORT PDF (client-side)
-// ==============================
-function exportPDF() {
-  if (!currentPlan) return;
+        // Tips
+        if (tipLines.length) {
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          doc.setTextColor(45, 122, 79);
+          doc.text(tipLines, ml + 11, iy);
+        }
 
-  const plan = currentPlan;
-  const exercises = plan.exercises || [];
+        y += cardH + 4;
+      });
 
-  const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>${plan.title || 'Тренировка'}</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #1a1a2e; }
-  h1 { font-size: 26px; margin-bottom: 4px; color: #0f3460; }
-  .meta { color: #666; font-size: 13px; margin-bottom: 16px; }
-  .summary { background: #f0f7ff; border-left: 4px solid #0f3460; padding: 12px 16px; margin-bottom: 20px; font-size: 14px; }
-  .ex { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-  .ex-num { display: inline-block; background: #0f3460; color: white; border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: 12px; font-weight: bold; margin-right: 8px; }
-  .ex-name { font-weight: bold; font-size: 16px; }
-  .ex-desc { color: #555; font-size: 13px; margin: 6px 0; }
-  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; background: #f0f0f0; }
-  .tip { color: #2d6a4f; font-size: 12px; margin-top: 6px; font-style: italic; }
-  footer { margin-top: 30px; text-align: center; color: #aaa; font-size: 12px; border-top: 1px solid #eee; padding-top: 16px; }
-</style>
-</head>
-<body>
-<h1>${plan.title || 'Тренировка'}</h1>
-<div class="meta">${[plan.totalMinutes ? `${plan.totalMinutes} мин` : '', plan.level || '', plan.focus || ''].filter(Boolean).join(' · ')}</div>
-${plan.summary ? `<div class="summary">${plan.summary}</div>` : ''}
-${exercises.map((ex, i) => `
-<div class="ex">
-  <span class="ex-num">${i + 1}</span><span class="ex-name">${ex.name}</span>
-  <div class="ex-desc">${ex.description || ''}</div>
-  <div class="badges">
-    ${ex.durationSeconds ? `<span class="badge">⏱ ${formatTime(ex.durationSeconds)}</span>` : ''}
-    ${ex.reps ? `<span class="badge">${ex.reps}</span>` : ''}
-    ${ex.restSeconds ? `<span class="badge">💤 отдых ${ex.restSeconds}с</span>` : ''}
-    ${(ex.muscles || []).map(m => `<span class="badge">${m}</span>`).join('')}
-  </div>
-  ${ex.tips ? `<div class="tip">💡 ${ex.tips}</div>` : ''}
-</div>`).join('')}
-<footer>Создано WorkoutNow · ${new Date().toLocaleDateString('ru-RU')}</footer>
+      // Footer
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(160, 160, 160);
+      doc.text('WorkoutNow  ·  ' + new Date().toLocaleDateString('ru-RU'), 105, 290, { align: 'center' });
+
+      doc.save((plan.title || 'workout').replace(/\s+/g, '-').toLowerCase() + '.pdf');
+      notif('✅ PDF сохранён!');
+    }
+
+    // ── EXPORT TXT ──
+    function exportTxt() {
+      if (!plan) return;
+      let t = `Тренировка: ${plan.title || ''}\n`;
+      if (plan.totalMinutes) t += `Время: ${plan.totalMinutes} мин | ${plan.level || ''} | ${plan.focus || ''}\n\n`;
+      if (plan.summary) t += plan.summary + '\n\n';
+      t += 'УПРАЖНЕНИЯ:\n';
+      (plan.exercises || []).forEach((ex, i) => {
+        t += `\n${i + 1}. ${ex.name}\n   ${ex.description || ''}\n`;
+        const d = [ex.durationSeconds ? fmt(ex.durationSeconds) : '', ex.reps || '', ex.restSeconds ? `отдых ${ex.restSeconds}с` : ''].filter(Boolean);
+        if (d.length) t += `   ${d.join(' · ')}\n`;
+        if (ex.tips) t += `   Совет: ${ex.tips}\n`;
+      });
+      t += `\nWorkoutNow · ${new Date().toLocaleDateString('ru-RU')}`;
+      navigator.clipboard.writeText(t).then(() => notif('✅ Скопировано!')).catch(() => notif('❌ Не удалось скопировать'));
+    }
+
+    document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+  </script>
 </body>
-</html>`;
 
-  const win = window.open('', '_blank');
-  win.document.write(htmlContent);
-  win.document.close();
-  setTimeout(() => { win.print(); }, 500);
-  showNotif('📄 Открыто для печати / сохранения в PDF');
-}
-
-// ==============================
-// EXPORT TEXT
-// ==============================
-function exportText() {
-  if (!currentPlan) return;
-
-  const plan = currentPlan;
-  const exercises = plan.exercises || [];
-
-  let text = `🏋️ ${plan.title || 'Тренировка'}\n`;
-  if (plan.totalMinutes) text += `⏱ ${plan.totalMinutes} минут | ${plan.level || ''} | ${plan.focus || ''}\n\n`;
-  if (plan.summary) text += `${plan.summary}\n\n`;
-  text += `УПРАЖНЕНИЯ:\n`;
-
-  exercises.forEach((ex, i) => {
-    text += `\n${i + 1}. ${ex.name}\n`;
-    if (ex.description) text += `   ${ex.description}\n`;
-    const details = [];
-    if (ex.durationSeconds) details.push(`${formatTime(ex.durationSeconds)}`);
-    if (ex.reps) details.push(ex.reps);
-    if (ex.restSeconds) details.push(`отдых ${ex.restSeconds}с`);
-    if (details.length) text += `   ${details.join(' · ')}\n`;
-    if (ex.tips) text += `   💡 ${ex.tips}\n`;
-  });
-
-  text += `\n\nСоздано WorkoutNow · ${new Date().toLocaleDateString('ru-RU')}`;
-
-  navigator.clipboard.writeText(text).then(() => {
-    showNotif('✅ Скопировано в буфер обмена');
-  }).catch(() => {
-    showNotif('❌ Не удалось скопировать');
-  });
-}
-
-// ==============================
-// UTILS
-// ==============================
-function formatTime(s) {
-  if (!s || s < 0) s = 0;
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-}
-
-function showNotif(msg, duration = 3000) {
-  const el = document.getElementById('notif');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._timeout);
-  el._timeout = setTimeout(() => el.classList.remove('show'), duration);
-}
-
-// ==============================
-// KEYBOARD SHORTCUT
-// ==============================
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    generatePlan();
-  }
-});
-</script>
-</body>
 </html>
