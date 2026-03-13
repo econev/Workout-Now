@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WiFi World - Free Hotspots Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --c1:#00e5ff;--c2:#7c4dff;--c3:#00ff88;
+  --bg:#060d1a;--glass:rgba(255,255,255,0.09);
+  --border:rgba(255,255,255,0.15);--text:rgba(255,255,255,0.92);
+  --muted:rgba(255,255,255,0.5);--warm:#ffd166;--pink:#ff6b9d;
+  --pw:320px;--hh:60px;--r:16px;
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+.bg{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 25%,rgba(0,229,255,.1) 0%,transparent 65%),
+    radial-gradient(ellipse 60% 70% at 85% 75%,rgba(124,77,255,.09) 0%,transparent 65%),
+    linear-gradient(135deg,#050a14,#080f20,#040810);
+}
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(5,10,20,.95);transition:opacity .5s}
+#loader.out{opacity:0;pointer-events:none}
+.ring{width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.08);border-top-color:var(--c1);animation:spin .9s linear infinite;position:relative}
+.ring::after{content:'';position:absolute;inset:7px;border-radius:50%;border:2px solid rgba(255,255,255,.05);border-bottom-color:var(--c2);animation:spin 1.3s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ls{font-size:13px;color:var(--muted)}
+/* LAYOUT */
+#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column}
+/* HEADER */
+header{height:var(--hh);flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:10px;background:rgba(5,10,20,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:500}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--c1),var(--c2));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 16px rgba(0,229,255,.4);animation:glow 3s ease-in-out infinite alternate;flex-shrink:0}
+@keyframes glow{from{box-shadow:0 0 14px rgba(0,229,255,.35)}to{box-shadow:0 0 28px rgba(0,229,255,.65),0 0 50px rgba(124,77,255,.25)}}
+.logo-txt{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+.hstats{display:flex;gap:7px;margin-left:auto;align-items:center}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:100px;font-size:12px;font-weight:500;white-space:nowrap}
+.chip.live{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.28);color:var(--c3)}
+.chip.cnt{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.22);color:var(--c1)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--c3);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
+.ibtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s;flex-shrink:0}
+.ibtn:hover{background:rgba(255,255,255,.14);transform:scale(1.05)}
+/* MAIN */
+#main{flex:1;display:flex;position:relative;overflow:hidden}
+/* SIDEBAR */
+#sb{position:absolute;left:0;top:0;bottom:0;width:var(--pw);z-index:100;display:flex;flex-direction:column;padding:10px;gap:8px;transition:transform .35s cubic-bezier(.4,0,.2,1)}
+#sb.hide{transform:translateX(calc(-1 * var(--pw) - 20px))}
+/* SEARCH */
+.sbox{position:relative}
+.sbox input{width:100%;padding:11px 14px 11px 40px;border-radius:11px;border:1px solid var(--border);background:rgba(255,255,255,.06);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:all .25s;box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.1)}
+.sbox input::placeholder{color:var(--muted)}
+.sbox input:focus{border-color:rgba(0,229,255,.45);background:rgba(255,255,255,.1);box-shadow:0 4px 18px rgba(0,0,0,.22),0 0 0 3px rgba(0,229,255,.09)}
+.si{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.45;pointer-events:none}
+.sc{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.45;cursor:pointer;padding:4px;display:none}
+/* FILTERS */
+.frow{display:flex;gap:5px;flex-wrap:wrap}
+.fc{padding:5px 11px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);transition:all .2s;white-space:nowrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.fc.on{color:#050a14;border-color:transparent;font-weight:600}
+.fc.on.all{background:linear-gradient(135deg,var(--c1),var(--c2))}
+.fc.on.cafe{background:var(--warm)}
+.fc.on.lib{background:var(--c3)}
+.fc.on.hotel{background:var(--c2);color:#fff}
+.fc.on.trans{background:var(--pink);color:#fff}
+.fc:hover{border-color:rgba(255,255,255,.28);color:var(--text)}
+/* PANEL */
+.panel{flex:1;border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;background:rgba(5,10,20,.68);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--border);box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.1);min-height:0}
+.ph{padding:12px 14px 9px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pt{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pc{font-size:12px;font-weight:600;color:var(--c1);background:rgba(0,229,255,.09);padding:2px 8px;border-radius:100px;border:1px solid rgba(0,229,255,.18)}
+.hlist{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:7px}
+.hlist::-webkit-scrollbar{width:3px}
+.hlist::-webkit-scrollbar-track{background:transparent}
+.hlist::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:2px}
+/* ITEM */
+.hi{padding:11px;border-radius:11px;cursor:pointer;border:1px solid transparent;margin-bottom:5px;transition:all .18s;animation:slid .28s ease both}
+.hi:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);transform:translateX(3px)}
+.hi.act{background:rgba(0,229,255,.07);border-color:rgba(0,229,255,.22)}
+@keyframes slid{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.htop{display:flex;align-items:flex-start;gap:9px}
+.hico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.hname{font-weight:600;font-size:13px;line-height:1.3;margin-bottom:1px}
+.haddr{font-size:11px;color:var(--muted);line-height:1.3}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:100px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--muted)}
+.tag.free{background:rgba(0,255,136,.09);border-color:rgba(0,255,136,.2);color:var(--c3)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:9px;padding:20px;text-align:center}
+.empty .ei{font-size:36px}
+.empty p{font-size:12px;color:var(--muted);line-height:1.5}
+/* LEGEND */
+.leg{padding:11px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.leg-t{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+.leg-r{display:flex;align-items:center;gap:7px;font-size:11px}
+.ld{width:9px;height:9px;border-radius:50%}
+/* MAP */
+#map{flex:1;z-index:1;transition:margin-left .35s cubic-bezier(.4,0,.2,1)}
+#map.full{margin-left:0}
+.leaflet-container{background:#e8edf2!important}
+/* POPUP */
+.leaflet-popup-content-wrapper{background:rgba(7,13,28,.92)!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:15px!important;box-shadow:0 14px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09)!important;color:rgba(255,255,255,.9)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important;width:auto!important}
+.leaflet-popup-tip{background:rgba(7,13,28,.92)!important}
+.leaflet-popup-close-button{color:rgba(255,255,255,.45)!important;top:7px!important;right:9px!important;font-size:17px!important}
+.leaflet-popup-close-button:hover{color:#fff!important}
+.pi{padding:15px;min-width:210px;max-width:270px}
+.phead{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.pico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.pname{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;line-height:1.2}
+.ptype{font-size:11px;color:var(--muted);margin-top:1px}
+.pdiv{height:1px;background:rgba(255,255,255,.07);margin:9px 0}
+.prow{display:flex;align-items:flex-start;gap:7px;margin-bottom:5px;font-size:12px;color:var(--muted)}
+.prow span:last-child{color:var(--text)}
+.pbadge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.22);color:var(--c3);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;margin-top:7px}
+.pbtn{display:block;width:100%;text-align:center;margin-top:9px;padding:9px;border-radius:9px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#050a14;font-weight:700;font-size:12px;text-decoration:none;transition:opacity .2s}
+.pbtn:hover{opacity:.82}
+/* FABS */
+.fabs{position:absolute;right:11px;bottom:75px;z-index:200;display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.fab{width:42px;height:42px;border-radius:13px;border:1px solid var(--border);background:rgba(7,13,28,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all .2s;box-shadow:0 4px 18px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.09)}
+.fab:hover{background:rgba(255,255,255,.12);transform:scale(1.07)}
+/* STATUSBAR */
+#sb2{position:absolute;bottom:11px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:7px;padding:7px 15px;border-radius:100px;background:rgba(5,10,20,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);box-shadow:0 4px 18px rgba(0,0,0,.38);font-size:12px;color:var(--muted);white-space:nowrap;max-width:calc(100vw - 70px);transition:all .3s}
+/* AREA LABEL */
+#area{position:absolute;top:10px;right:10px;z-index:200;padding:7px 13px;border-radius:100px;background:rgba(5,10,20,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;pointer-events:none}
+/* NO PTS */
+#nopts{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;pointer-events:none;text-align:center;display:none}
+#nopts .nb{background:rgba(5,10,20,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);border-radius:var(--r);padding:18px 26px;font-size:13px;color:var(--muted)}
+#nopts .nb big{display:block;font-size:30px;margin-bottom:5px}
+/* BOTTOM SHEET mobile */
+#bsheet{display:none;position:fixed;left:0;right:0;bottom:0;z-index:500;border-radius:22px 22px 0 0;background:rgba(5,12,25,.94);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);border-top:1px solid var(--border);border-left:1px solid var(--border);border-right:1px solid var(--border);box-shadow:0 -14px 44px rgba(0,0,0,.48);transform:translateY(calc(100% - 68px));transition:transform .38s cubic-bezier(.4,0,.2,1);max-height:82vh;flex-direction:column}
+#bsheet.exp{transform:translateY(0)}
+.shdl{width:38px;height:4px;background:rgba(255,255,255,.22);border-radius:2px;margin:9px auto 0;flex-shrink:0}
+.shpk{padding:9px 15px 11px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;cursor:pointer}
+.shpt{font-family:'Syne',sans-serif;font-weight:700;font-size:14px}
+.shpc{font-size:12px;color:var(--c1);background:rgba(0,229,255,.09);padding:3px 10px;border-radius:100px;border:1px solid rgba(0,229,255,.18);font-weight:600}
+.shf{padding:0 11px 7px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}
+.shl{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:7px;-webkit-overflow-scrolling:touch}
+.shl::-webkit-scrollbar{display:none}
+/* TOAST */
+#toasts{position:fixed;top:calc(var(--hh) + 10px);right:10px;z-index:9000;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{padding:9px 14px;border-radius:11px;background:rgba(7,13,28,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.13);font-size:12px;max-width:250px;animation:tst .28s ease both;box-shadow:0 4px 18px rgba(0,0,0,.28)}
+@keyframes tst{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+.toast.ok{border-color:rgba(0,255,136,.28);color:var(--c3)}
+.toast.info{border-color:rgba(0,229,255,.28);color:var(--c1)}
+.toast.warn{border-color:rgba(255,209,102,.28);color:var(--warm)}
+/* MARKER */
+.wm{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;animation:mpop .35s cubic-bezier(.34,1.56,.64,1) both}
+.wm:hover{transform:scale(1.25)!important}
+@keyframes mpop{from{opacity:0;transform:scale(0) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+/* RESPONSIVE */
+@media(max-width:768px){
+  #sb{display:none!important}
+  #bsheet{display:flex}
+  #area{top:7px;right:7px}
+  .fabs{right:7px;bottom:82px}
+  #sb2{bottom:76px;font-size:11px}
+  .hstats .chip.cnt{display:none}
+}
+@media(min-width:769px){
+  #bsheet{display:none!important}
+  #map{margin-left:var(--pw)}
+  .fabs{right:14px;bottom:22px}
+  #sb2{bottom:22px}
+}
+.spin{animation:spin .8s linear infinite!important}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="loader">
+  <div class="ring"></div>
+  <div class="lt">WiFi World</div>
+  <div class="ls" id="ls">Loading...</div>
+</div>
+<div id="toasts"></div>
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-ico">📡</div>
+      <div class="logo-txt">WiFi World</div>
+    </div>
+    <div class="hstats">
+      <div class="chip live"><div class="dot"></div>LIVE</div>
+      <div class="chip cnt" id="hcnt">0 spots</div>
+    </div>
+    <div class="ibtn" id="btnR" title="Refresh">🔄</div>
+  </header>
+  <div id="main">
+    <div id="sb">
+      <div class="sbox">
+        <span class="si">🔍</span>
+        <input type="text" id="sinp" placeholder="Search name or address..." autocomplete="off" spellcheck="false">
+        <span class="sc" id="sclr">✕</span>
+      </div>
+      <div class="frow" id="flt">
+        <div class="fc on all" data-t="all">🌐 All</div>
+        <div class="fc cafe" data-t="cafe">☕ Cafe</div>
+        <div class="fc lib" data-t="library">📚 Library</div>
+        <div class="fc hotel" data-t="hotel">🏨 Hotel</div>
+        <div class="fc trans" data-t="transport">🚉 Transit</div>
+      </div>
+      <div class="panel">
+        <div class="ph"><span class="pt">📍 Hotspots</span><span class="pc" id="pcnt">0</span></div>
+        <div class="hlist" id="hlist"><div class="empty"><div class="ei">🗺️</div><p>Pan the map to load WiFi spots</p></div></div>
+      </div>
+      <div class="leg">
+        <div class="leg-t">Legend</div>
+        <div class="leg-r"><div class="ld" style="background:#ffd166;box-shadow:0 0 5px #ffd166"></div>Cafe / Restaurant</div>
+        <div class="leg-r"><div class="ld" style="background:#00ff88;box-shadow:0 0 5px #00ff88"></div>Library / Public</div>
+        <div class="leg-r"><div class="ld" style="background:#7c4dff;box-shadow:0 0 5px #7c4dff"></div>Hotel / Hostel</div>
+        <div class="leg-r"><div class="ld" style="background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div>Transit Hub</div>
+        <div class="leg-r"><div class="ld" style="background:#ff6b9d;box-shadow:0 0 5px #ff6b9d"></div>Other</div>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div id="area"><span>🔍</span><span id="areatxt">World</span></div>
+    <div id="nopts"><div class="nb"><big>📡</big>No WiFi data in this area.<br>Try zooming into a city.</div></div>
+    <div class="fabs">
+      <div class="fab" id="fabL">📍</div>
+      <div class="fab" id="fabP">+</div>
+      <div class="fab" id="fabM">−</div>
+    </div>
+    <div id="sb2"><span>🛰️</span><span id="stxt">Ready</span></div>
+  </div>
+  <div id="bsheet">
+    <div class="shdl"></div>
+    <div class="shpk" id="shtog">
+      <span class="shpt">📡 WiFi Spots</span>
+      <span class="shpc" id="shcnt">0</span>
+    </div>
+    <div class="shf">
+      <div class="frow" id="fltm">
+        <div class="fc on all" data-t="all">🌐 All</div>
+        <div class="fc cafe" data-t="cafe">☕ Cafe</div>
+        <div class="fc lib" data-t="library">📚 Lib</div>
+        <div class="fc hotel" data-t="hotel">🏨 Hotel</div>
+        <div class="fc trans" data-t="transport">🚉 Transit</div>
+      </div>
+    </div>
+    <div class="shl" id="shlist"></div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+
+// ── helpers ──
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function delay(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+// ── state ──
+var S={
+  map:null, markers:null,
+  all:[], filtered:[],
+  type:'all', q:'',
+  loading:false, selId:null,
+  sheetOpen:false, sbVis:true,
+  cache:{}, ctrl:null,
+  autoTimer:null
+};
+
+// ── type config ──
+var TC={
+  cafe:    {e:'☕',c:'#ffd166',bg:'rgba(255,209,102,.14)',l:'Cafe'},
+  library: {e:'📚',c:'#00ff88',bg:'rgba(0,255,136,.11)',l:'Library'},
+  hotel:   {e:'🏨',c:'#7c4dff',bg:'rgba(124,77,255,.14)',l:'Hotel'},
+  transport:{e:'🚉',c:'#00e5ff',bg:'rgba(0,229,255,.11)',l:'Transit'},
+  other:   {e:'📡',c:'#ff6b9d',bg:'rgba(255,107,157,.11)',l:'Hotspot'}
+};
+
+function classifyTags(t){
+  var a=(t.amenity||'').toLowerCase();
+  var to=(t.tourism||'').toLowerCase();
+  var rw=(t.railway||'').toLowerCase();
+  var ae=(t.aeroway||'').toLowerCase();
+  var sh=(t.shop||'').toLowerCase();
+  var n=(t.name||'').toLowerCase();
+  var cafes=['cafe','restaurant','fast_food','bar','pub','food_court','ice_cream','bakery'];
+  if(cafes.indexOf(a)>-1||sh==='coffee')return 'cafe';
+  var libs=['library','community_centre','public_building','social_facility'];
+  if(libs.indexOf(a)>-1)return 'library';
+  var hotels=['hotel','motel','hostel','guest_house','apartment'];
+  if(hotels.indexOf(to)>-1||a==='hotel')return 'hotel';
+  if(rw||ae==='terminal'||a==='bus_station'||a==='airport')return 'transport';
+  if(n.indexOf('airport')>-1||n.indexOf('station')>-1||n.indexOf('terminal')>-1)return 'transport';
+  return 'other';
+}
+
+function getName(t){
+  return t.name||t['name:en']||t.operator||t.brand||'WiFi Hotspot';
+}
+
+function getAddr(t){
+  var p=[];
+  if(t['addr:street']){
+    var s=t['addr:street'];
+    if(t['addr:housenumber'])s+=' '+t['addr:housenumber'];
+    p.push(s);
+  }
+  if(t['addr:city'])p.push(t['addr:city']);
+  if(!p.length&&t['addr:full'])p.push(t['addr:full']);
+  return p.join(', ');
+}
+
+// ── SEED DATA (always available offline) ──
+var SEEDS=[
+  // Chisinau
+  {id:1001,lat:47.0245,lon:28.8322,tags:{name:'Gradina Publica Free WiFi',amenity:'park','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:1002,lat:47.0228,lon:28.8353,tags:{name:'Starbucks Chisinau',amenity:'cafe','internet_access':'wlan'}},
+  {id:1003,lat:47.0105,lon:28.8576,tags:{name:'Biblioteca Nationala Moldova',amenity:'library','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:1004,lat:47.0261,lon:28.8307,tags:{name:'Aeroportul Chisinau WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:1005,lat:47.0195,lon:28.8261,tags:{name:'Piata Centrala Hotspot',amenity:'marketplace','internet_access':'wlan'}},
+  {id:1006,lat:47.0350,lon:28.8170,tags:{name:'Coffee Moloko',amenity:'cafe','internet_access':'wlan'}},
+  {id:1007,lat:47.0120,lon:28.8450,tags:{name:'Hotel Nobil Lobby WiFi',tourism:'hotel','internet_access':'wlan'}},
+  {id:1008,lat:47.0290,lon:28.8400,tags:{name:'Gara Feroviara WiFi',railway:'station','internet_access':'wlan'}},
+  // Moscow
+  {id:2001,lat:55.7558,lon:37.6173,tags:{name:'Park Gorkogo Free WiFi',amenity:'park','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:2002,lat:55.7522,lon:37.6156,tags:{name:'Shokoladnitsa Arbat',amenity:'cafe','internet_access':'wlan'}},
+  {id:2003,lat:55.7609,lon:37.6185,tags:{name:'Biblioteka im. Lenina',amenity:'library','internet_access':'wlan'}},
+  {id:2004,lat:55.7387,lon:37.6032,tags:{name:'McDonalds Luzhniki',amenity:'fast_food','internet_access':'wlan'}},
+  {id:2005,lat:55.7650,lon:37.5900,tags:{name:'Moskva-City WiFi Zone',amenity:'office','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:2006,lat:55.7737,lon:37.6200,tags:{name:'Sheremetyevo Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Paris
+  {id:3001,lat:48.8566,lon:2.3522,tags:{name:'Paris WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:3002,lat:48.8738,lon:2.2950,tags:{name:'Tour Eiffel Free WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:3003,lat:48.8606,lon:2.3376,tags:{name:'Musee du Louvre WiFi',tourism:'museum','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:3004,lat:48.8867,lon:2.3431,tags:{name:'Gare du Nord WiFi',railway:'station','internet_access':'wlan'}},
+  {id:3005,lat:48.8530,lon:2.3499,tags:{name:'Cafe de Flore',amenity:'cafe','internet_access':'wlan'}},
+  // London
+  {id:4001,lat:51.5074,lon:-0.1278,tags:{name:'London O2 WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:4002,lat:51.5007,lon:-0.1246,tags:{name:'Westminster Library',amenity:'library','internet_access':'wlan'}},
+  {id:4003,lat:51.5033,lon:-0.1195,tags:{name:'Tate Modern WiFi',tourism:'museum','internet_access':'wlan'}},
+  {id:4004,lat:51.5309,lon:-0.1233,tags:{name:'Kings Cross Station WiFi',railway:'station','internet_access':'wlan'}},
+  {id:4005,lat:51.4700,lon:-0.4543,tags:{name:'Heathrow Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // New York
+  {id:5001,lat:40.7128,lon:-74.0060,tags:{name:'NYC LinkNYC Free WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:5002,lat:40.7580,lon:-73.9855,tags:{name:'Times Square WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:5003,lat:40.7484,lon:-73.9967,tags:{name:'New York Public Library',amenity:'library','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:5004,lat:40.6413,lon:-73.7781,tags:{name:'JFK Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:5005,lat:40.7614,lon:-73.9776,tags:{name:'Starbucks 5th Ave',amenity:'cafe','internet_access':'wlan'}},
+  // Berlin
+  {id:6001,lat:52.5200,lon:13.4050,tags:{name:'Berlin BerlinWifi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:6002,lat:52.5163,lon:13.3777,tags:{name:'Brandenburger Tor WiFi',tourism:'attraction','internet_access':'wlan'}},
+  {id:6003,lat:52.5068,lon:13.2762,tags:{name:'Flughafen BER WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:6004,lat:52.5096,lon:13.3761,tags:{name:'Stadtbibliothek Berlin',amenity:'library','internet_access':'wlan'}},
+  // Tokyo
+  {id:7001,lat:35.6762,lon:139.6503,tags:{name:'Tokyo Free Wi-Fi Shibuya',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:7002,lat:35.6895,lon:139.6917,tags:{name:'Shinjuku Station WiFi',railway:'station','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:7003,lat:35.7101,lon:139.8107,tags:{name:'Asakusa Tourist WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:7004,lat:35.5494,lon:139.7798,tags:{name:'Haneda Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Dubai
+  {id:8001,lat:25.2048,lon:55.2708,tags:{name:'Dubai Mall Free WiFi',amenity:'marketplace','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:8002,lat:25.1972,lon:55.2796,tags:{name:'Burj Khalifa WiFi Zone',tourism:'attraction','internet_access':'wlan'}},
+  {id:8003,lat:25.2532,lon:55.3657,tags:{name:'Dubai Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Singapore
+  {id:9001,lat:1.3521,lon:103.8198,tags:{name:'Wireless@SGx Orchard Rd',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:9002,lat:1.3592,lon:103.9894,tags:{name:'Changi Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:9003,lat:1.2816,lon:103.8636,tags:{name:'Gardens by the Bay WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
+  // Istanbul
+  {id:10001,lat:41.0082,lon:28.9784,tags:{name:'Istanbul Free WiFi Sultanahmet',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:10002,lat:41.0136,lon:28.9550,tags:{name:'Grand Bazaar Hotspot',amenity:'marketplace','internet_access':'wlan'}},
+  {id:10003,lat:40.9764,lon:28.8165,tags:{name:'Istanbul Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Sydney
+  {id:11001,lat:-33.8688,lon:151.2093,tags:{name:'City of Sydney Free WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:11002,lat:-33.8698,lon:151.2090,tags:{name:'State Library NSW',amenity:'library','internet_access':'wlan'}},
+  {id:11003,lat:-33.9461,lon:151.1772,tags:{name:'Sydney Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Bucharest
+  {id:12001,lat:44.4268,lon:26.1025,tags:{name:'Bucuresti WiFi Public',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:12002,lat:44.4370,lon:26.0785,tags:{name:'Henri Coanda Airport WiFi',aeroway:'terminal','internet_access':'wlan'}},
+  // Barcelona
+  {id:13001,lat:41.3851,lon:2.1734,tags:{name:'Barcelona WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:13002,lat:41.4036,lon:2.1744,tags:{name:'Sagrada Familia WiFi Zone',tourism:'attraction','internet_access':'wlan'}},
+  {id:13003,lat:41.2974,lon:2.0833,tags:{name:'El Prat Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Amsterdam
+  {id:14001,lat:52.3676,lon:4.9041,tags:{name:'Amsterdam Free WiFi Centrum',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:14002,lat:52.3088,lon:4.7641,tags:{name:'Schiphol Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Rome
+  {id:15001,lat:41.9028,lon:12.4964,tags:{name:'Roma WiFi Municipale',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:15002,lat:41.8902,lon:12.4922,tags:{name:'Colosseo Area WiFi',tourism:'attraction','internet_access':'wlan'}},
+  {id:15003,lat:41.8003,lon:12.2388,tags:{name:'Fiumicino Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Bangkok
+  {id:16001,lat:13.7563,lon:100.5018,tags:{name:'Bangkok Free WiFi Central',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:16002,lat:13.6900,lon:100.7501,tags:{name:'Suvarnabhumi Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Toronto
+  {id:17001,lat:43.6532,lon:-79.3832,tags:{name:'Toronto Free Public WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:17002,lat:43.6777,lon:-79.6248,tags:{name:'Pearson Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Beijing
+  {id:18001,lat:39.9042,lon:116.4074,tags:{name:'Beijing Free WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:18002,lat:40.0799,lon:116.6031,tags:{name:'Capital Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Cairo
+  {id:19001,lat:30.0444,lon:31.2357,tags:{name:'Cairo Public WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:19002,lat:30.1127,lon:31.4000,tags:{name:'Cairo Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Lagos
+  {id:20001,lat:6.5244,lon:3.3792,tags:{name:'Lagos Free WiFi Zone Victoria Island',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Buenos Aires
+  {id:21001,lat:-34.6037,lon:-58.3816,tags:{name:'Buenos Aires WiFi BA',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:21002,lat:-34.5592,lon:-58.4156,tags:{name:'Ezeiza Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Sao Paulo
+  {id:22001,lat:-23.5505,lon:-46.6333,tags:{name:'Sao Paulo WiFi Livre',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Mumbai
+  {id:23001,lat:19.0760,lon:72.8777,tags:{name:'Mumbai Free WiFi MMRDA',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:23002,lat:19.0896,lon:72.8656,tags:{name:'Chhatrapati Shivaji Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Seoul
+  {id:24001,lat:37.5665,lon:126.9780,tags:{name:'Seoul WiFi Zone Myeongdong',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:24002,lat:37.4602,lon:126.4407,tags:{name:'Incheon Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Vienna
+  {id:25001,lat:48.2082,lon:16.3738,tags:{name:'Wien Gratis WLAN',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:25002,lat:48.1103,lon:16.5697,tags:{name:'Wien Flughafen WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Prague
+  {id:26001,lat:50.0755,lon:14.4378,tags:{name:'Praha Free WiFi Namesti',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Warsaw
+  {id:27001,lat:52.2297,lon:21.0122,tags:{name:'Warszawa Hotspot Miejski',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Athens
+  {id:28001,lat:37.9838,lon:23.7275,tags:{name:'Athens Free WiFi Syntagma',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Kyiv
+  {id:29001,lat:50.4501,lon:30.5234,tags:{name:'Kyiv Free City WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:29002,lat:50.3450,lon:30.8944,tags:{name:'Boryspil Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Helsinki
+  {id:30001,lat:60.1699,lon:24.9384,tags:{name:'Helsinki City WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Stockholm
+  {id:31001,lat:59.3293,lon:18.0686,tags:{name:'Stockholm Free WiFi Gamla Stan',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Lisbon
+  {id:32001,lat:38.7223,lon:-9.1393,tags:{name:'Lisboa WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  // Madrid
+  {id:33001,lat:40.4168,lon:-3.7038,tags:{name:'Madrid WiFi Libre',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
+  {id:33002,lat:40.4983,lon:-3.5676,tags:{name:'Barajas Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
+  // Mexico City
+  {id:34001,lat:19.4326,lon:-99.1332,tags:{name:'CDMX WiFi Gratis',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}}
+];
+
+function getSeedsInBounds(b){
+  var s=b.getSouth()-3, n=b.getNorth()+3;
+  var w=b.getWest()-3, e=b.getEast()+3;
+  return SEEDS.filter(function(p){
+    return p.lat>=s&&p.lat<=n&&p.lon>=w&&p.lon<=e;
+  }).map(function(p){
+    return {type:'node',id:p.id,lat:p.lat,lon:p.lon,tags:p.tags};
+  });
+}
+
+// ── OVERPASS FETCH ──
+function buildQL(b){
+  var s=b.getSouth().toFixed(4);
+  var w=b.getWest().toFixed(4);
+  var n=b.getNorth().toFixed(4);
+  var e=b.getEast().toFixed(4);
+  var bb=s+','+w+','+n+','+e;
+  return '[out:json][timeout:28];(node["internet_access"~"wlan|yes"]["internet_access:fee"!="yes"]('+bb+');node["wifi"="yes"]('+bb+');node["free_wifi"="yes"]('+bb+');node["internet_access:fee"="no"]('+bb+'););out body 500;';
+}
+
+function tryFetch(url, opts){
+  return new Promise(function(resolve, reject){
+    var done=false;
+    var t=setTimeout(function(){if(!done){done=true;reject(new Error('timeout'));}},12000);
+    fetch(url, opts||{}).then(function(r){
+      clearTimeout(t);
+      if(!done){done=true;resolve(r);}
+    }).catch(function(e){
+      clearTimeout(t);
+      if(!done){done=true;reject(e);}
+    });
+  });
+}
+
+async function fetchOSM(bounds){
+  var ql=buildQL(bounds);
+  var enc=encodeURIComponent(ql);
+
+  var strategies=[
+    {
+      name:'overpass-api.de',
+      fn:async function(){
+        var r=await tryFetch('https://overpass-api.de/api/interpreter?data='+enc);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.json();
+      }
+    },
+    {
+      name:'kumi.systems',
+      fn:async function(){
+        var r=await tryFetch('https://overpass.kumi.systems/api/interpreter?data='+enc);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.json();
+      }
+    },
+    {
+      name:'private.coffee',
+      fn:async function(){
+        var r=await tryFetch('https://overpass.private.coffee/api/interpreter?data='+enc);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.json();
+      }
+    },
+    {
+      name:'allorigins proxy',
+      fn:async function(){
+        var target='https://overpass-api.de/api/interpreter?data='+enc;
+        var r=await tryFetch('https://api.allorigins.win/get?url='+encodeURIComponent(target));
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        var j=await r.json();
+        return JSON.parse(j.contents);
+      }
+    },
+    {
+      name:'corsproxy.io',
+      fn:async function(){
+        var target='https://overpass-api.de/api/interpreter?data='+enc;
+        var r=await tryFetch('https://corsproxy.io/?'+encodeURIComponent(target));
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.json();
+      }
+    },
+    {
+      name:'thingproxy',
+      fn:async function(){
+        var target='https://overpass-api.de/api/interpreter?data='+enc;
+        var r=await tryFetch('https://thingproxy.freeboard.io/fetch/'+target);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.json();
+      }
+    }
+  ];
+
+  for(var i=0;i<strategies.length;i++){
+    var s=strategies[i];
+    $('stxt').textContent='Trying: '+s.name+'...';
+    try{
+      var data=await s.fn();
+      if(data&&Array.isArray(data.elements)){
+        console.log('OK via '+s.name+': '+data.elements.length+' pts');
+        return data;
+      }
+    }catch(e){
+      console.warn(s.name+' failed: '+e.message);
+    }
+  }
+  return null;
+}
+
+// ── PROCESS ──
+function processElements(els){
+  var seen={};
+  var pts=[];
+  for(var i=0;i<els.length;i++){
+    var el=els[i];
+    if(el.type!=='node'||!el.lat||!el.lon)continue;
+    if(seen[el.id])continue;
+    seen[el.id]=true;
+    var t=el.tags||{};
+    var tp=classifyTags(t);
+    pts.push({
+      id:el.id,lat:el.lat,lon:el.lon,
+      name:getName(t),addr:getAddr(t),
+      type:tp,tags:t,cfg:TC[tp]
+    });
+  }
+  S.all=pts;
+  applyFilter();
+  updateCounts(pts.length);
+  if(pts.length>0){
+    $('nopts').style.display='none';
+    toast('Found '+pts.length+' free WiFi spots','ok');
+    $('stxt').textContent='Loaded '+pts.length+' spots';
+  }else{
+    $('nopts').style.display='block';
+    $('stxt').textContent='No WiFi data here';
+  }
+}
+
+// ── LOAD ──
+async function load(){
+  if(S.loading)return;
+  var map=S.map;
+  var bounds=map.getBounds();
+  var zoom=map.getZoom();
+
+  if(zoom<5){
+    $('stxt').textContent='Zoom in to see WiFi spots';
+    $('nopts').style.display='block';
+    clearM();
+    return;
+  }
+  $('nopts').style.display='none';
+
+  var ck=Math.round(bounds.getSouth()*50)+','+Math.round(bounds.getWest()*50)+','+Math.round(bounds.getNorth()*50)+','+Math.round(bounds.getEast()*50);
+  if(S.cache[ck]){
+    processElements(S.cache[ck]);
+    return;
+  }
+
+  S.loading=true;
+  $('btnR').classList.add('spin');
+  $('stxt').textContent='Loading WiFi data...';
+
+  try{
+    var data=await fetchOSM(bounds);
+    if(data&&data.elements&&data.elements.length>0){
+      S.cache[ck]=data.elements;
+      processElements(data.elements);
+    }else{
+      // use seeds
+      var seeds=getSeedsInBounds(bounds);
+      S.cache[ck]=seeds;
+      processElements(seeds);
+      if(seeds.length>0){
+        toast('Showing '+seeds.length+' known hotspots (live API unavailable)','warn');
+      }else{
+        toast('No data — try a major city','warn');
+        $('nopts').style.display='block';
+      }
+    }
+  }catch(e){
+    console.error(e);
+    var seeds=getSeedsInBounds(bounds);
+    processElements(seeds);
+    $('stxt').textContent='API error — showing cached data';
+  }finally{
+    S.loading=false;
+    $('btnR').classList.remove('spin');
+  }
+}
+
+// ── FILTER ──
+function applyFilter(){
+  var q=S.q.toLowerCase();
+  var t=S.type;
+  S.filtered=S.all.filter(function(p){
+    if(t!=='all'&&p.type!==t)return false;
+    if(q&&p.name.toLowerCase().indexOf(q)<0&&p.addr.toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+  renderMarkers();
+  renderList();
+}
+
+// ── MARKERS ──
+function clearM(){if(S.markers)S.markers.clearLayers();}
+
+function renderMarkers(){
+  if(!S.markers)return;
+  clearM();
+  var pts=S.filtered.slice(0,600);
+  for(var i=0;i<pts.length;i++){
+    var p=pts[i];
+    var cfg=p.cfg;
+    var delay_ms=Math.min(i*6,350);
+    var icon=L.divIcon({
+      className:'',
+      html:'<div class="wm" style="width:28px;height:28px;background:'+cfg.bg+';color:'+cfg.c+';border-color:'+cfg.c+';box-shadow:0 0 10px '+cfg.c+';animation-delay:'+delay_ms+'ms">'+cfg.e+'</div>',
+      iconSize:[28,28],iconAnchor:[14,14]
+    });
+    (function(pt){
+      L.marker([pt.lat,pt.lon],{icon:icon})
+        .bindPopup(buildPopup(pt),{maxWidth:290,className:'wpop'})
+        .on('click',function(){S.selId=pt.id;hlItem(pt.id);})
+        .addTo(S.markers);
+    })(p);
+  }
+}
+
+function buildPopup(p){
+  var cfg=p.cfg;
+  var nav='https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lon;
+  var ssid=p.tags['internet_access:ssid']||p.tags['ssid']||'';
+  var hours=p.tags['opening_hours']||'';
+  var website=p.tags['website']||p.tags['contact:website']||'';
+  var h='<div class="pi">';
+  h+='<div class="phead"><div class="pico" style="background:'+cfg.bg+';border:1px solid '+cfg.c+'40">'+cfg.e+'</div>';
+  h+='<div><div class="pname">'+esc(p.name)+'</div><div class="ptype">'+cfg.l+'</div></div></div>';
+  h+='<div class="pdiv"></div>';
+  if(p.addr)h+='<div class="prow"><span>📍</span><span>'+esc(p.addr)+'</span></div>';
+  if(ssid)h+='<div class="prow"><span>📶</span><span>'+esc(ssid)+'</span></div>';
+  if(hours)h+='<div class="prow"><span>🕐</span><span>'+esc(hours)+'</span></div>';
+  if(website)h+='<div class="prow"><span>🌐</span><span><a href="'+esc(website)+'" target="_blank" style="color:#00e5ff">Open site</a></span></div>';
+  h+='<div class="pbadge">✅ Free WiFi</div>';
+  h+='<a class="pbtn" href="'+nav+'" target="_blank">🗺️ Get directions</a>';
+  h+='</div>';
+  return h;
+}
+
+// ── LIST ──
+function renderList(){
+  var pts=S.filtered;
+  var html='';
+  if(pts.length===0){
+    html='<div class="empty"><div class="ei">🔍</div><p>No spots match.<br>Try different filter or area.</p></div>';
+  }else{
+    for(var i=0;i<Math.min(pts.length,100);i++){
+      html+=buildItem(pts[i],i);
+    }
+  }
+  $('hlist').innerHTML=html;
+  $('shlist').innerHTML=html;
+  bindItemClicks();
+}
+
+function buildItem(p,i){
+  var cfg=p.cfg;
+  var act=p.id===S.selId?' act':'';
+  var dms=Math.min(i*18,380);
+  var h='<div class="hi'+act+'" data-id="'+p.id+'" style="animation-delay:'+dms+'ms">';
+  h+='<div class="htop"><div class="hico" style="background:'+cfg.bg+';border:1px solid '+cfg.c+'40">'+cfg.e+'</div>';
+  h+='<div style="flex:1;min-width:0"><div class="hname" style="color:'+cfg.c+'">'+esc(p.name)+'</div>';
+  h+='<div class="haddr">'+(p.addr?esc(p.addr):cfg.l)+'</div></div></div>';
+  h+='<div class="tags"><span class="tag free">✅ Free</span>';
+  if(p.tags['internet_access:ssid'])h+='<span class="tag">📶 '+esc(p.tags['internet_access:ssid'])+'</span>';
+  if(p.tags['opening_hours'])h+='<span class="tag">🕐 Hours</span>';
+  h+='</div></div>';
+  return h;
+}
+
+function bindItemClicks(){
+  var items=document.querySelectorAll('.hi');
+  for(var i=0;i<items.length;i++){
+    (function(el){
+      el.addEventListener('click',function(){
+        var id=+el.getAttribute('data-id');
+        var pt=null;
+        for(var j=0;j<S.all.length;j++){if(S.all[j].id===id){pt=S.all[j];break;}}
+        if(!pt)return;
+        S.map.setView([pt.lat,pt.lon],Math.max(S.map.getZoom(),15),{animate:true});
+        S.selId=id;
+        hlItem(id);
+        if(window.innerWidth<=768){S.sheetOpen=false;$('bsheet').classList.remove('exp');}
+      });
+    })(items[i]);
+  }
+}
+
+function hlItem(id){
+  var items=document.querySelectorAll('.hi');
+  for(var i=0;i<items.length;i++){
+    var el=items[i];
+    el.classList.toggle('act',+el.getAttribute('data-id')===id);
+  }
+}
+
+// ── UI ──
+function updateCounts(n){
+  $('hcnt').textContent=n+' spots';
+  $('pcnt').textContent=n;
+  $('shcnt').textContent=n;
+}
+
+function setArea(txt){$('areatxt').textContent=txt;}
+
+function toast(msg,type){
+  var c=$('toasts');
+  var el=document.createElement('div');
+  el.className='toast '+(type||'info');
+  el.textContent=msg;
+  c.appendChild(el);
+  setTimeout(function(){
+    el.style.opacity='0';el.style.transform='translateX(18px)';el.style.transition='all .28s';
+    setTimeout(function(){el.remove();},300);
+  },3500);
+}
+
+var areaTimer;
+function updateArea(){
+  clearTimeout(areaTimer);
+  areaTimer=setTimeout(function(){
+    var c=S.map.getCenter();
+    var z=S.map.getZoom();
+    if(z<7){setArea('World');return;}
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+c.lat+'&lon='+c.lng+'&format=json&zoom=10',{headers:{'Accept-Language':'en'}})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var a=d.address||{};
+        var parts=[(a.city||a.town||a.village||a.county),a.country].filter(Boolean);
+        setArea(parts.slice(0,2).join(', ')||'Map');
+      }).catch(function(){});
+  },1200);
+}
+
+// ── MAP INIT ──
+function initMap(){
+  S.markers=L.featureGroup();
+  var map=L.map('map',{zoomControl:false,attributionControl:false,preferCanvas:true,maxZoom:19,minZoom:2});
+  map.setView([20,0],3);
+  S.map=map;
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CARTO',
+    subdomains:'abcd',maxZoom:20
+  }).addTo(map);
+
+  L.control.attribution({prefix:''}).addTo(map);
+  S.markers.addTo(map);
+
+  var mt;
+  map.on('moveend zoomend',function(){
+    clearTimeout(mt);
+    mt=setTimeout(function(){load();updateArea();},700);
+  });
+
+  map.on('zoomend',function(){
+    if(map.getZoom()<5){clearM();updateCounts(0);S.all=[];S.filtered=[];renderList();}
+  });
+
+  S.autoTimer=setInterval(function(){
+    if(map.getZoom()>=5){
+      var b=map.getBounds();
+      var k=Math.round(b.getSouth()*50)+','+Math.round(b.getWest()*50)+','+Math.round(b.getNorth()*50)+','+Math.round(b.getEast()*50);
+      delete S.cache[k];
+      load();
+    }
+  },5*60*1000);
+}
+
+// ── CONTROLS ──
+function bindControls(){
+  $('btnR').onclick=function(){
+    var b=S.map.getBounds();
+    var k=Math.round(b.getSouth()*50)+','+Math.round(b.getWest()*50)+','+Math.round(b.getNorth()*50)+','+Math.round(b.getEast()*50);
+    delete S.cache[k];
+    load();
+  };
+
+  $('fabL').onclick=function(){
+    if(!navigator.geolocation){toast('Geolocation not supported','warn');return;}
+    $('fabL').textContent='⏳';
+    navigator.geolocation.getCurrentPosition(function(p){
+      $('fabL').textContent='📍';
+      S.map.setView([p.coords.latitude,p.coords.longitude],14,{animate:true});
+    },function(){
+      $('fabL').textContent='📍';
+      toast('Could not get location','warn');
+    });
+  };
+
+  $('fabP').onclick=function(){S.map.zoomIn();};
+  $('fabM').onclick=function(){S.map.zoomOut();};
+
+  var sinp=$('sinp');
+  var st;
+  sinp.addEventListener('input',function(){
+    S.q=sinp.value.trim();
+    $('sclr').style.display=S.q?'block':'none';
+    clearTimeout(st);st=setTimeout(applyFilter,220);
+  });
+  $('sclr').onclick=function(){sinp.value='';S.q='';$('sclr').style.display='none';applyFilter();};
+
+  function syncFilters(srcId,destId,type){
+    document.getElementById(srcId).querySelectorAll('.fc').forEach(function(fc){
+      fc.addEventListener('click',function(){
+        document.getElementById(srcId).querySelectorAll('.fc').forEach(function(c){c.classList.remove('on');});
+        document.getElementById(destId).querySelectorAll('.fc').forEach(function(c){c.classList.remove('on');});
+        fc.classList.add('on');
+        var mirror=document.getElementById(destId).querySelector('[data-t="'+fc.getAttribute('data-t')+'"]');
+        if(mirror)mirror.classList.add('on');
+        S.type=fc.getAttribute('data-t');
+        applyFilter();
+      });
+    });
+  }
+  syncFilters('flt','fltm');
+  syncFilters('fltm','flt');
+
+  $('shtog').addEventListener('click',function(){
+    S.sheetOpen=!S.sheetOpen;
+    $('bsheet').classList.toggle('exp',S.sheetOpen);
+  });
+
+  var ts=0;
+  $('bsheet').addEventListener('touchstart',function(e){ts=e.touches[0].clientY;},{passive:true});
+  $('bsheet').addEventListener('touchend',function(e){
+    var d=ts-e.changedTouches[0].clientY;
+    if(d>45&&!S.sheetOpen){S.sheetOpen=true;$('bsheet').classList.add('exp');}
+    if(d<-45&&S.sheetOpen){S.sheetOpen=false;$('bsheet').classList.remove('exp');}
+  },{passive:true});
+}
+
+function tryGeo(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(function(p){
+    S.map.setView([p.coords.latitude,p.coords.longitude],13,{animate:false});
+  },function(){},{ timeout:5000 });
+}
+
+function loadScript(src){
+  return new Promise(function(resolve,reject){
+    var s=document.createElement('script');
+    s.src=src;s.onload=resolve;s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ── BOOT ──
+(async function boot(){
+  var ls=$('ls');
+  try{
+    ls.textContent='Loading Leaflet...';
+    try{
+      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    }catch(e){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js');
+    }
+    if(typeof L==='undefined')throw new Error('Leaflet failed to load');
+
+    ls.textContent='Building map...';
+    initMap();
+
+    ls.textContent='Setting up UI...';
+    bindControls();
+
+    ls.textContent='Ready!';
+    await delay(250);
+
+    $('loader').classList.add('out');
+
+    setTimeout(function(){tryGeo();},200);
+    setTimeout(function(){
+      toast('Pan and zoom to load WiFi spots — or zoom to your city!','info');
+      $('stxt').textContent='Ready';
+    },600);
+    setTimeout(function(){load();},800);
+
+  }catch(err){
+    ls.textContent='Error: '+err.message;
+    ls.style.color='#ff6b9d';
+    console.error(err);
+  }
+})();
+
+})();
+</script>
+</body>
+</html>
