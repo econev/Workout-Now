@@ -1,934 +1,1574 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WiFi World - Free Hotspots Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>WorkoutNow — Тренировка здесь и сейчас</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --c1:#00e5ff;--c2:#7c4dff;--c3:#00ff88;
-  --bg:#060d1a;--glass:rgba(255,255,255,0.09);
-  --border:rgba(255,255,255,0.15);--text:rgba(255,255,255,0.92);
-  --muted:rgba(255,255,255,0.5);--warm:#ffd166;--pink:#ff6b9d;
-  --pw:320px;--hh:60px;--r:16px;
-}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
-.bg{position:fixed;inset:0;z-index:0;
-  background:
-    radial-gradient(ellipse 70% 60% at 15% 25%,rgba(0,229,255,.1) 0%,transparent 65%),
-    radial-gradient(ellipse 60% 70% at 85% 75%,rgba(124,77,255,.09) 0%,transparent 65%),
-    linear-gradient(135deg,#050a14,#080f20,#040810);
-}
-/* LOADER */
-#loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(5,10,20,.95);transition:opacity .5s}
-#loader.out{opacity:0;pointer-events:none}
-.ring{width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.08);border-top-color:var(--c1);animation:spin .9s linear infinite;position:relative}
-.ring::after{content:'';position:absolute;inset:7px;border-radius:50%;border:2px solid rgba(255,255,255,.05);border-bottom-color:var(--c2);animation:spin 1.3s linear infinite reverse}
-@keyframes spin{to{transform:rotate(360deg)}}
-.lt{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.ls{font-size:13px;color:var(--muted)}
-/* LAYOUT */
-#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column}
-/* HEADER */
-header{height:var(--hh);flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:10px;background:rgba(5,10,20,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:500}
-.logo{display:flex;align-items:center;gap:9px}
-.logo-ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--c1),var(--c2));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 16px rgba(0,229,255,.4);animation:glow 3s ease-in-out infinite alternate;flex-shrink:0}
-@keyframes glow{from{box-shadow:0 0 14px rgba(0,229,255,.35)}to{box-shadow:0 0 28px rgba(0,229,255,.65),0 0 50px rgba(124,77,255,.25)}}
-.logo-txt{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
-.hstats{display:flex;gap:7px;margin-left:auto;align-items:center}
-.chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:100px;font-size:12px;font-weight:500;white-space:nowrap}
-.chip.live{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.28);color:var(--c3)}
-.chip.cnt{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.22);color:var(--c1)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--c3);animation:blink 1.6s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
-.ibtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s;flex-shrink:0}
-.ibtn:hover{background:rgba(255,255,255,.14);transform:scale(1.05)}
-/* MAIN */
-#main{flex:1;display:flex;position:relative;overflow:hidden}
-/* SIDEBAR */
-#sb{position:absolute;left:0;top:0;bottom:0;width:var(--pw);z-index:100;display:flex;flex-direction:column;padding:10px;gap:8px;transition:transform .35s cubic-bezier(.4,0,.2,1)}
-#sb.hide{transform:translateX(calc(-1 * var(--pw) - 20px))}
-/* SEARCH */
-.sbox{position:relative}
-.sbox input{width:100%;padding:11px 14px 11px 40px;border-radius:11px;border:1px solid var(--border);background:rgba(255,255,255,.06);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:all .25s;box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.1)}
-.sbox input::placeholder{color:var(--muted)}
-.sbox input:focus{border-color:rgba(0,229,255,.45);background:rgba(255,255,255,.1);box-shadow:0 4px 18px rgba(0,0,0,.22),0 0 0 3px rgba(0,229,255,.09)}
-.si{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.45;pointer-events:none}
-.sc{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.45;cursor:pointer;padding:4px;display:none}
-/* FILTERS */
-.frow{display:flex;gap:5px;flex-wrap:wrap}
-.fc{padding:5px 11px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);transition:all .2s;white-space:nowrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.fc.on{color:#050a14;border-color:transparent;font-weight:600}
-.fc.on.all{background:linear-gradient(135deg,var(--c1),var(--c2))}
-.fc.on.cafe{background:var(--warm)}
-.fc.on.lib{background:var(--c3)}
-.fc.on.hotel{background:var(--c2);color:#fff}
-.fc.on.trans{background:var(--pink);color:#fff}
-.fc:hover{border-color:rgba(255,255,255,.28);color:var(--text)}
-/* PANEL */
-.panel{flex:1;border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;background:rgba(5,10,20,.68);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--border);box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.1);min-height:0}
-.ph{padding:12px 14px 9px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.pt{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.pc{font-size:12px;font-weight:600;color:var(--c1);background:rgba(0,229,255,.09);padding:2px 8px;border-radius:100px;border:1px solid rgba(0,229,255,.18)}
-.hlist{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:7px}
-.hlist::-webkit-scrollbar{width:3px}
-.hlist::-webkit-scrollbar-track{background:transparent}
-.hlist::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:2px}
-/* ITEM */
-.hi{padding:11px;border-radius:11px;cursor:pointer;border:1px solid transparent;margin-bottom:5px;transition:all .18s;animation:slid .28s ease both}
-.hi:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);transform:translateX(3px)}
-.hi.act{background:rgba(0,229,255,.07);border-color:rgba(0,229,255,.22)}
-@keyframes slid{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-.htop{display:flex;align-items:flex-start;gap:9px}
-.hico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.hname{font-weight:600;font-size:13px;line-height:1.3;margin-bottom:1px}
-.haddr{font-size:11px;color:var(--muted);line-height:1.3}
-.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
-.tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:100px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--muted)}
-.tag.free{background:rgba(0,255,136,.09);border-color:rgba(0,255,136,.2);color:var(--c3)}
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:9px;padding:20px;text-align:center}
-.empty .ei{font-size:36px}
-.empty p{font-size:12px;color:var(--muted);line-height:1.5}
-/* LEGEND */
-.leg{padding:11px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:5px;flex-shrink:0}
-.leg-t{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
-.leg-r{display:flex;align-items:center;gap:7px;font-size:11px}
-.ld{width:9px;height:9px;border-radius:50%}
-/* MAP */
-#map{flex:1;z-index:1;transition:margin-left .35s cubic-bezier(.4,0,.2,1)}
-#map.full{margin-left:0}
-.leaflet-container{background:#e8edf2!important}
-/* POPUP */
-.leaflet-popup-content-wrapper{background:rgba(7,13,28,.92)!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:15px!important;box-shadow:0 14px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09)!important;color:rgba(255,255,255,.9)!important;padding:0!important}
-.leaflet-popup-content{margin:0!important;width:auto!important}
-.leaflet-popup-tip{background:rgba(7,13,28,.92)!important}
-.leaflet-popup-close-button{color:rgba(255,255,255,.45)!important;top:7px!important;right:9px!important;font-size:17px!important}
-.leaflet-popup-close-button:hover{color:#fff!important}
-.pi{padding:15px;min-width:210px;max-width:270px}
-.phead{display:flex;align-items:center;gap:9px;margin-bottom:9px}
-.pico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.pname{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;line-height:1.2}
-.ptype{font-size:11px;color:var(--muted);margin-top:1px}
-.pdiv{height:1px;background:rgba(255,255,255,.07);margin:9px 0}
-.prow{display:flex;align-items:flex-start;gap:7px;margin-bottom:5px;font-size:12px;color:var(--muted)}
-.prow span:last-child{color:var(--text)}
-.pbadge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.22);color:var(--c3);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;margin-top:7px}
-.pbtn{display:block;width:100%;text-align:center;margin-top:9px;padding:9px;border-radius:9px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#050a14;font-weight:700;font-size:12px;text-decoration:none;transition:opacity .2s}
-.pbtn:hover{opacity:.82}
-/* FABS */
-.fabs{position:absolute;right:11px;bottom:75px;z-index:200;display:flex;flex-direction:column;gap:7px;align-items:flex-end}
-.fab{width:42px;height:42px;border-radius:13px;border:1px solid var(--border);background:rgba(7,13,28,.8);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all .2s;box-shadow:0 4px 18px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.09)}
-.fab:hover{background:rgba(255,255,255,.12);transform:scale(1.07)}
-/* STATUSBAR */
-#sb2{position:absolute;bottom:11px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:7px;padding:7px 15px;border-radius:100px;background:rgba(5,10,20,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);box-shadow:0 4px 18px rgba(0,0,0,.38);font-size:12px;color:var(--muted);white-space:nowrap;max-width:calc(100vw - 70px);transition:all .3s}
-/* AREA LABEL */
-#area{position:absolute;top:10px;right:10px;z-index:200;padding:7px 13px;border-radius:100px;background:rgba(5,10,20,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;pointer-events:none}
-/* NO PTS */
-#nopts{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;pointer-events:none;text-align:center;display:none}
-#nopts .nb{background:rgba(5,10,20,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);border-radius:var(--r);padding:18px 26px;font-size:13px;color:var(--muted)}
-#nopts .nb big{display:block;font-size:30px;margin-bottom:5px}
-/* BOTTOM SHEET mobile */
-#bsheet{display:none;position:fixed;left:0;right:0;bottom:0;z-index:500;border-radius:22px 22px 0 0;background:rgba(5,12,25,.94);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);border-top:1px solid var(--border);border-left:1px solid var(--border);border-right:1px solid var(--border);box-shadow:0 -14px 44px rgba(0,0,0,.48);transform:translateY(calc(100% - 68px));transition:transform .38s cubic-bezier(.4,0,.2,1);max-height:82vh;flex-direction:column}
-#bsheet.exp{transform:translateY(0)}
-.shdl{width:38px;height:4px;background:rgba(255,255,255,.22);border-radius:2px;margin:9px auto 0;flex-shrink:0}
-.shpk{padding:9px 15px 11px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;cursor:pointer}
-.shpt{font-family:'Syne',sans-serif;font-weight:700;font-size:14px}
-.shpc{font-size:12px;color:var(--c1);background:rgba(0,229,255,.09);padding:3px 10px;border-radius:100px;border:1px solid rgba(0,229,255,.18);font-weight:600}
-.shf{padding:0 11px 7px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}
-.shl{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:7px;-webkit-overflow-scrolling:touch}
-.shl::-webkit-scrollbar{display:none}
-/* TOAST */
-#toasts{position:fixed;top:calc(var(--hh) + 10px);right:10px;z-index:9000;display:flex;flex-direction:column;gap:7px;pointer-events:none}
-.toast{padding:9px 14px;border-radius:11px;background:rgba(7,13,28,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.13);font-size:12px;max-width:250px;animation:tst .28s ease both;box-shadow:0 4px 18px rgba(0,0,0,.28)}
-@keyframes tst{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
-.toast.ok{border-color:rgba(0,255,136,.28);color:var(--c3)}
-.toast.info{border-color:rgba(0,229,255,.28);color:var(--c1)}
-.toast.warn{border-color:rgba(255,209,102,.28);color:var(--warm)}
-/* MARKER */
-.wm{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;animation:mpop .35s cubic-bezier(.34,1.56,.64,1) both}
-.wm:hover{transform:scale(1.25)!important}
-@keyframes mpop{from{opacity:0;transform:scale(0) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-/* RESPONSIVE */
-@media(max-width:768px){
-  #sb{display:none!important}
-  #bsheet{display:flex}
-  #area{top:7px;right:7px}
-  .fabs{right:7px;bottom:82px}
-  #sb2{bottom:76px;font-size:11px}
-  .hstats .chip.cnt{display:none}
-}
-@media(min-width:769px){
-  #bsheet{display:none!important}
-  #map{margin-left:var(--pw)}
-  .fabs{right:14px;bottom:22px}
-  #sb2{bottom:22px}
-}
-.spin{animation:spin .8s linear infinite!important}
+  :root {
+    --bg: #080c10;
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
+    --glass: rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.10);
+    --glass-strong: rgba(255,255,255,0.11);
+    --text: #f0f4f8;
+    --text-muted: rgba(240,244,248,0.45);
+    --text-dim: rgba(240,244,248,0.25);
+    --accent: #a8ff78;
+    --accent-dim: rgba(168,255,120,0.15);
+    --accent-glow: rgba(168,255,120,0.08);
+    --danger: #ff6b6b;
+    --warn: #ffd166;
+    --info: #74b9ff;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --blur: blur(24px);
+    --shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* AMBIENT GLOW */
+  .ambient {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ambient-1 { width: 500px; height: 500px; background: rgba(168,255,120,0.04); top: -200px; right: -100px; }
+  .ambient-2 { width: 400px; height: 400px; background: rgba(116,185,255,0.03); bottom: 0; left: -100px; }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    padding: 32px 0 24px;
+    text-align: center;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(168,255,120,0.3);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  header p {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  /* GLASS CARD */
+  .glass-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* QUICK INPUT */
+  .quick-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .quick-input-wrap {
+    position: relative;
+  }
+
+  textarea.quick-input {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    padding: 14px 16px;
+    resize: none;
+    outline: none;
+    min-height: 80px;
+    transition: border-color 0.2s, background 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea.quick-input::placeholder { color: var(--text-dim); }
+  textarea.quick-input:focus {
+    border-color: rgba(168,255,120,0.35);
+    background: rgba(168,255,120,0.03);
+  }
+
+  /* EXAMPLES */
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .example-chip {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .example-chip:hover, .example-chip:active {
+    background: var(--accent-dim);
+    border-color: rgba(168,255,120,0.3);
+    color: var(--accent);
+  }
+
+  /* ADVANCED TOGGLE */
+  .advanced-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 0 4px;
+    user-select: none;
+  }
+
+  .advanced-toggle-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .toggle-icon {
+    width: 16px; height: 16px;
+    color: var(--text-dim);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+  }
+
+  .toggle-icon.open { transform: rotate(180deg); }
+
+  /* ADVANCED FILTERS */
+  .advanced-section {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .advanced-section.open { max-height: 900px; }
+
+  .advanced-inner {
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 12px;
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .filter-group.full { grid-column: 1 / -1; }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .filter-input, .filter-select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .filter-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(240,244,248,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  .filter-select option { background: #1a1f28; color: var(--text); }
+
+  .filter-input:focus, .filter-select:focus {
+    border-color: rgba(168,255,120,0.3);
+  }
+
+  .filter-input::placeholder { color: var(--text-dim); }
+
+  /* PILLS / MULTI SELECT */
+  .pills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .pill.active {
+    background: var(--accent-dim);
+    border-color: rgba(168,255,120,0.4);
+    color: var(--accent);
+  }
+
+  /* GENERATE BUTTON */
+  .btn-generate {
+    width: 100%;
+    padding: 16px;
+    background: rgba(168,255,120,0.12);
+    border: 1px solid rgba(168,255,120,0.3);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    box-shadow: 0 0 30px rgba(168,255,120,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(168,255,120,0.0);
+    transition: background 0.2s;
+  }
+
+  .btn-generate:hover::before, .btn-generate:active::before {
+    background: rgba(168,255,120,0.06);
+  }
+
+  .btn-generate:active { transform: scale(0.99); }
+
+  .btn-generate.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(168,255,120,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* PLAN SECTION */
+  #plan-section { display: none; margin-bottom: 24px; }
+  #plan-section.visible { display: block; animation: fadeUp 0.5s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .plan-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .plan-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .plan-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .meta-tag {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .plan-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon:hover, .btn-icon:active {
+    background: rgba(255,255,255,0.09);
+    color: var(--text);
+  }
+
+  /* OVERALL TIMER */
+  .overall-timer {
+    background: rgba(168,255,120,0.05);
+    border: 1px solid rgba(168,255,120,0.12);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .timer-info { display: flex; flex-direction: column; gap: 2px; }
+  .timer-label { font-size: 11px; color: var(--text-muted); font-weight: 400; text-transform: uppercase; letter-spacing: 1px; }
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-controls { display: flex; gap: 8px; }
+
+  .btn-timer {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(168,255,120,0.25);
+    background: rgba(168,255,120,0.08);
+    color: var(--accent);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .btn-timer:hover, .btn-timer:active { background: rgba(168,255,120,0.15); }
+
+  /* EXERCISE CARDS */
+  .exercises-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .exercise-card {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .exercise-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: rgba(168,255,120,0.0);
+    transition: background 0.2s;
+  }
+
+  .exercise-card.active {
+    background: rgba(168,255,120,0.05);
+    border-color: rgba(168,255,120,0.2);
+  }
+
+  .exercise-card.active::before { background: var(--accent); }
+
+  .exercise-card.done {
+    opacity: 0.45;
+  }
+
+  .exercise-card.done .ex-title { text-decoration: line-through; }
+
+  .exercise-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ex-num {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .exercise-card.active .ex-num {
+    background: var(--accent-dim);
+    border-color: rgba(168,255,120,0.3);
+    color: var(--accent);
+  }
+
+  .ex-content { flex: 1; min-width: 0; }
+
+  .ex-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    line-height: 1.3;
+  }
+
+  .ex-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .ex-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .badge-time { background: rgba(116,185,255,0.1); border-color: rgba(116,185,255,0.2); color: var(--info); }
+  .badge-reps { background: rgba(255,209,102,0.1); border-color: rgba(255,209,102,0.2); color: var(--warn); }
+  .badge-rest { background: rgba(255,107,107,0.1); border-color: rgba(255,107,107,0.2); color: var(--danger); }
+  .badge-muscle { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-muted); }
+
+  /* EXERCISE TIMER */
+  .ex-timer-wrap {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: none;
+  }
+
+  .exercise-card.active .ex-timer-wrap { display: block; }
+
+  .ex-timer-bar-bg {
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .ex-timer-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 100%;
+    transition: width 1s linear;
+  }
+
+  .ex-timer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ex-timer-time {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ex-timer-btns { display: flex; gap: 6px; }
+
+  .btn-sm {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-sm-green {
+    background: rgba(168,255,120,0.1);
+    border-color: rgba(168,255,120,0.25);
+    color: var(--accent);
+  }
+
+  .btn-sm-green:hover { background: rgba(168,255,120,0.18); }
+
+  .btn-sm-muted {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.1);
+    color: var(--text-muted);
+  }
+
+  .btn-sm-muted:hover { background: rgba(255,255,255,0.08); }
+
+  /* EXPORT BUTTONS */
+  .export-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .btn-export {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .btn-export:hover, .btn-export:active {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  /* SUMMARY BOX */
+  .plan-summary {
+    background: rgba(168,255,120,0.04);
+    border: 1px solid rgba(168,255,120,0.1);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* REST CARD */
+  .rest-card {
+    background: rgba(255,107,107,0.05);
+    border: 1px solid rgba(255,107,107,0.12);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: rgba(255,107,107,0.8);
+  }
+
+  .rest-icon { font-size: 14px; }
+
+  /* ERROR / EMPTY STATE */
+  .error-msg {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .error-msg .emoji { font-size: 32px; margin-bottom: 12px; display: block; }
+
+  /* PROGRESS */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .progress-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* COMPLETION */
+  .completion-banner {
+    text-align: center;
+    padding: 24px 16px;
+    display: none;
+  }
+
+  .completion-banner.visible { display: block; animation: fadeUp 0.5s ease; }
+
+  .completion-banner .big-emoji { font-size: 48px; margin-bottom: 12px; display: block; }
+
+  .completion-banner h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .completion-banner p { font-size: 14px; color: var(--text-muted); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 24px 16px 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* SECTION HEADING */
+  .section-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(30,36,46,0.95);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    backdrop-filter: var(--blur);
+    z-index: 1000;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .notif.show { transform: translateX(-50%) translateY(0); }
+
+  /* MOBILE TWEAKS */
+  @media (max-width: 480px) {
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+    .timer-display { font-size: 24px; }
+    header { padding: 24px 0 18px; }
+    .export-row { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  /* PULSE ANIMATION FOR ACTIVE EXERCISE */
+  @keyframes pulse-border {
+    0%, 100% { border-color: rgba(168,255,120,0.2); }
+    50% { border-color: rgba(168,255,120,0.45); }
+  }
+
+  .exercise-card.active { animation: pulse-border 2s ease-in-out infinite; }
+
+  /* INPUT CHAR COUNTER */
+  .char-counter {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
-<div class="bg"></div>
-<div id="loader">
-  <div class="ring"></div>
-  <div class="lt">WiFi World</div>
-  <div class="ls" id="ls">Loading...</div>
-</div>
-<div id="toasts"></div>
-<div id="app">
+
+<div class="ambient ambient-1"></div>
+<div class="ambient ambient-2"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
   <header>
     <div class="logo">
-      <div class="logo-ico">📡</div>
-      <div class="logo-txt">WiFi World</div>
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">Workout<span>Now</span></div>
     </div>
-    <div class="hstats">
-      <div class="chip live"><div class="dot"></div>LIVE</div>
-      <div class="chip cnt" id="hcnt">0 spots</div>
-    </div>
-    <div class="ibtn" id="btnR" title="Refresh">🔄</div>
+    <p>Скажи что есть — получи тренировку</p>
   </header>
-  <div id="main">
-    <div id="sb">
-      <div class="sbox">
-        <span class="si">🔍</span>
-        <input type="text" id="sinp" placeholder="Search name or address..." autocomplete="off" spellcheck="false">
-        <span class="sc" id="sclr">✕</span>
-      </div>
-      <div class="frow" id="flt">
-        <div class="fc on all" data-t="all">🌐 All</div>
-        <div class="fc cafe" data-t="cafe">☕ Cafe</div>
-        <div class="fc lib" data-t="library">📚 Library</div>
-        <div class="fc hotel" data-t="hotel">🏨 Hotel</div>
-        <div class="fc trans" data-t="transport">🚉 Transit</div>
-      </div>
-      <div class="panel">
-        <div class="ph"><span class="pt">📍 Hotspots</span><span class="pc" id="pcnt">0</span></div>
-        <div class="hlist" id="hlist"><div class="empty"><div class="ei">🗺️</div><p>Pan the map to load WiFi spots</p></div></div>
-      </div>
-      <div class="leg">
-        <div class="leg-t">Legend</div>
-        <div class="leg-r"><div class="ld" style="background:#ffd166;box-shadow:0 0 5px #ffd166"></div>Cafe / Restaurant</div>
-        <div class="leg-r"><div class="ld" style="background:#00ff88;box-shadow:0 0 5px #00ff88"></div>Library / Public</div>
-        <div class="leg-r"><div class="ld" style="background:#7c4dff;box-shadow:0 0 5px #7c4dff"></div>Hotel / Hostel</div>
-        <div class="leg-r"><div class="ld" style="background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div>Transit Hub</div>
-        <div class="leg-r"><div class="ld" style="background:#ff6b9d;box-shadow:0 0 5px #ff6b9d"></div>Other</div>
+
+  <!-- INPUT CARD -->
+  <div class="glass-card" id="input-card">
+    <span class="quick-label">Опиши ситуацию</span>
+
+    <div class="quick-input-wrap">
+      <textarea class="quick-input" id="quick-input" maxlength="300"
+        placeholder="У меня есть 15 минут, стул, болит спина..."></textarea>
+      <span class="char-counter" id="char-counter">0/300</span>
+    </div>
+
+    <div class="examples">
+      <div class="example-chip" onclick="setExample('15 минут, только стул, болит поясница')">💺 Стул + поясница</div>
+      <div class="example-chip" onclick="setExample('30 минут, дома без инвентаря, хочу кардио')">🏠 Дома без всего</div>
+      <div class="example-chip" onclick="setExample('10 минут, офис, сидячая работа, шея затекла')">💼 Офис, шея</div>
+      <div class="example-chip" onclick="setExample('20 минут, коврик для йоги, хочу растяжку')">🧘 Растяжка</div>
+      <div class="example-chip" onclick="setExample('45 минут, гантели 10 кг, полная тренировка тела')">🏋️ Гантели дома</div>
+    </div>
+
+    <!-- ADVANCED -->
+    <div class="advanced-toggle" onclick="toggleAdvanced()">
+      <svg class="toggle-icon" id="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+      <span class="advanced-toggle-text">Расширенные параметры</span>
+    </div>
+
+    <div class="advanced-section" id="advanced-section">
+      <div class="advanced-inner">
+
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">Возраст</label>
+            <input class="filter-input" id="f-age" type="number" placeholder="25" min="10" max="100">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Пол</label>
+            <select class="filter-select" id="f-gender">
+              <option value="">Не указан</option>
+              <option value="male">Мужской</option>
+              <option value="female">Женский</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Вес (кг)</label>
+            <input class="filter-input" id="f-weight" type="number" placeholder="70" min="30" max="300">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Рост (см)</label>
+            <input class="filter-input" id="f-height" type="number" placeholder="175" min="100" max="250">
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom:10px">
+          <label class="filter-label">Уровень подготовки</label>
+          <div class="pills-wrap" id="f-level">
+            <div class="pill" data-val="beginner" onclick="togglePill(this,'f-level')">🌱 Новичок</div>
+            <div class="pill active" data-val="intermediate" onclick="togglePill(this,'f-level')">⚡ Средний</div>
+            <div class="pill" data-val="advanced" onclick="togglePill(this,'f-level')">🔥 Продвинутый</div>
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom:10px">
+          <label class="filter-label">Цель</label>
+          <div class="pills-wrap" id="f-goal">
+            <div class="pill" data-val="strength" onclick="togglePill(this,'f-goal')">💪 Сила</div>
+            <div class="pill" data-val="cardio" onclick="togglePill(this,'f-goal')">❤️ Кардио</div>
+            <div class="pill active" data-val="flexibility" onclick="togglePill(this,'f-goal')">🧘 Гибкость</div>
+            <div class="pill" data-val="weightloss" onclick="togglePill(this,'f-goal')">⚖️ Похудение</div>
+          </div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom:10px">
+          <label class="filter-label">Что болит / ограничения</label>
+          <div class="pills-wrap" id="f-restrictions">
+            <div class="pill" data-val="back" onclick="togglePill(this,'f-restrictions')">🔴 Спина</div>
+            <div class="pill" data-val="knees" onclick="togglePill(this,'f-restrictions')">🔴 Колени</div>
+            <div class="pill" data-val="shoulders" onclick="togglePill(this,'f-restrictions')">🔴 Плечи</div>
+            <div class="pill" data-val="neck" onclick="togglePill(this,'f-restrictions')">🔴 Шея</div>
+            <div class="pill" data-val="wrists" onclick="togglePill(this,'f-restrictions')">🔴 Запястья</div>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Доступный инвентарь</label>
+          <div class="pills-wrap" id="f-equipment">
+            <div class="pill" data-val="none" onclick="togglePill(this,'f-equipment')">🚫 Ничего</div>
+            <div class="pill" data-val="mat" onclick="togglePill(this,'f-equipment')">🧘 Коврик</div>
+            <div class="pill" data-val="chair" onclick="togglePill(this,'f-equipment')">💺 Стул</div>
+            <div class="pill" data-val="dumbbells" onclick="togglePill(this,'f-equipment')">🏋️ Гантели</div>
+            <div class="pill" data-val="bands" onclick="togglePill(this,'f-equipment')">🎀 Резинки</div>
+            <div class="pill" data-val="pullupbar" onclick="togglePill(this,'f-equipment')">🔩 Турник</div>
+          </div>
+        </div>
+
       </div>
     </div>
-    <div id="map"></div>
-    <div id="area"><span>🔍</span><span id="areatxt">World</span></div>
-    <div id="nopts"><div class="nb"><big>📡</big>No WiFi data in this area.<br>Try zooming into a city.</div></div>
-    <div class="fabs">
-      <div class="fab" id="fabL">📍</div>
-      <div class="fab" id="fabP">+</div>
-      <div class="fab" id="fabM">−</div>
-    </div>
-    <div id="sb2"><span>🛰️</span><span id="stxt">Ready</span></div>
+
+    <button class="btn-generate" id="btn-generate" onclick="generatePlan()">
+      <span id="btn-text">⚡ Создать план тренировки</span>
+      <div class="spinner" id="spinner" style="display:none"></div>
+    </button>
   </div>
-  <div id="bsheet">
-    <div class="shdl"></div>
-    <div class="shpk" id="shtog">
-      <span class="shpt">📡 WiFi Spots</span>
-      <span class="shpc" id="shcnt">0</span>
-    </div>
-    <div class="shf">
-      <div class="frow" id="fltm">
-        <div class="fc on all" data-t="all">🌐 All</div>
-        <div class="fc cafe" data-t="cafe">☕ Cafe</div>
-        <div class="fc lib" data-t="library">📚 Lib</div>
-        <div class="fc hotel" data-t="hotel">🏨 Hotel</div>
-        <div class="fc trans" data-t="transport">🚉 Transit</div>
+
+  <!-- PLAN SECTION -->
+  <div id="plan-section">
+
+    <!-- PLAN HEADER -->
+    <div class="glass-card">
+      <div class="plan-header">
+        <div>
+          <div class="plan-title" id="plan-title">Тренировка</div>
+          <div class="plan-meta" id="plan-meta"></div>
+        </div>
+        <div class="plan-actions">
+          <div class="btn-icon" onclick="resetPlan()" title="Новый план">↺</div>
+        </div>
+      </div>
+
+      <!-- OVERALL TIMER -->
+      <div class="overall-timer">
+        <div class="timer-info">
+          <span class="timer-label">Общее время</span>
+          <span class="timer-display" id="overall-timer">00:00</span>
+        </div>
+        <div class="timer-controls">
+          <button class="btn-timer" id="btn-overall-play" onclick="toggleOverallTimer()" title="Старт/Пауза">▶</button>
+          <button class="btn-timer" onclick="resetOverallTimer()" title="Сброс">⟲</button>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-row">
+        <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+        <span class="progress-text" id="progress-text">0 / 0</span>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="plan-summary" id="plan-summary"></div>
+
+      <!-- EXPORT -->
+      <div class="export-row">
+        <button class="btn-export" onclick="exportPDF()">📄 Скачать PDF</button>
+        <button class="btn-export" onclick="exportText()">📋 Скопировать</button>
       </div>
     </div>
-    <div class="shl" id="shlist"></div>
+
+    <!-- EXERCISES LIST -->
+    <div class="exercises-list" id="exercises-list"></div>
+
+    <!-- COMPLETION -->
+    <div class="completion-banner" id="completion-banner">
+      <span class="big-emoji">🎉</span>
+      <h3>Отличная работа!</h3>
+      <p>Ты завершил тренировку. Тело скажет спасибо.</p>
+    </div>
+
   </div>
+
 </div>
+
+<footer>WorkoutNow · AI-powered · Работает без регистрации</footer>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
 <script>
-(function(){
-'use strict';
+// ==============================
+// STATE
+// ==============================
+let currentPlan = null;
+let overallTimer = { interval: null, seconds: 0, running: false };
+let exTimer = { interval: null, seconds: 0, total: 0, running: false, cardIdx: -1 };
+let advancedOpen = false;
+let doneExercises = new Set();
 
-// ── helpers ──
-var $=function(id){return document.getElementById(id);};
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function delay(ms){return new Promise(function(r){setTimeout(r,ms);});}
+// ==============================
+// CHAR COUNTER
+// ==============================
+document.getElementById('quick-input').addEventListener('input', function() {
+  document.getElementById('char-counter').textContent = this.value.length + '/300';
+});
 
-// ── state ──
-var S={
-  map:null, markers:null,
-  all:[], filtered:[],
-  type:'all', q:'',
-  loading:false, selId:null,
-  sheetOpen:false, sbVis:true,
-  cache:{}, ctrl:null,
-  autoTimer:null
-};
-
-// ── type config ──
-var TC={
-  cafe:    {e:'☕',c:'#ffd166',bg:'rgba(255,209,102,.14)',l:'Cafe'},
-  library: {e:'📚',c:'#00ff88',bg:'rgba(0,255,136,.11)',l:'Library'},
-  hotel:   {e:'🏨',c:'#7c4dff',bg:'rgba(124,77,255,.14)',l:'Hotel'},
-  transport:{e:'🚉',c:'#00e5ff',bg:'rgba(0,229,255,.11)',l:'Transit'},
-  other:   {e:'📡',c:'#ff6b9d',bg:'rgba(255,107,157,.11)',l:'Hotspot'}
-};
-
-function classifyTags(t){
-  var a=(t.amenity||'').toLowerCase();
-  var to=(t.tourism||'').toLowerCase();
-  var rw=(t.railway||'').toLowerCase();
-  var ae=(t.aeroway||'').toLowerCase();
-  var sh=(t.shop||'').toLowerCase();
-  var n=(t.name||'').toLowerCase();
-  var cafes=['cafe','restaurant','fast_food','bar','pub','food_court','ice_cream','bakery'];
-  if(cafes.indexOf(a)>-1||sh==='coffee')return 'cafe';
-  var libs=['library','community_centre','public_building','social_facility'];
-  if(libs.indexOf(a)>-1)return 'library';
-  var hotels=['hotel','motel','hostel','guest_house','apartment'];
-  if(hotels.indexOf(to)>-1||a==='hotel')return 'hotel';
-  if(rw||ae==='terminal'||a==='bus_station'||a==='airport')return 'transport';
-  if(n.indexOf('airport')>-1||n.indexOf('station')>-1||n.indexOf('terminal')>-1)return 'transport';
-  return 'other';
+// ==============================
+// EXAMPLES
+// ==============================
+function setExample(text) {
+  document.getElementById('quick-input').value = text;
+  document.getElementById('char-counter').textContent = text.length + '/300';
 }
 
-function getName(t){
-  return t.name||t['name:en']||t.operator||t.brand||'WiFi Hotspot';
+// ==============================
+// ADVANCED TOGGLE
+// ==============================
+function toggleAdvanced() {
+  advancedOpen = !advancedOpen;
+  document.getElementById('advanced-section').classList.toggle('open', advancedOpen);
+  document.getElementById('toggle-icon').classList.toggle('open', advancedOpen);
 }
 
-function getAddr(t){
-  var p=[];
-  if(t['addr:street']){
-    var s=t['addr:street'];
-    if(t['addr:housenumber'])s+=' '+t['addr:housenumber'];
-    p.push(s);
+// ==============================
+// PILLS
+// ==============================
+function togglePill(el, groupId) {
+  // For level - single select; for others - multi
+  if (groupId === 'f-level') {
+    document.querySelectorAll(`#${groupId} .pill`).forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    el.classList.toggle('active');
   }
-  if(t['addr:city'])p.push(t['addr:city']);
-  if(!p.length&&t['addr:full'])p.push(t['addr:full']);
-  return p.join(', ');
 }
 
-// ── SEED DATA (always available offline) ──
-var SEEDS=[
-  // Chisinau
-  {id:1001,lat:47.0245,lon:28.8322,tags:{name:'Gradina Publica Free WiFi',amenity:'park','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:1002,lat:47.0228,lon:28.8353,tags:{name:'Starbucks Chisinau',amenity:'cafe','internet_access':'wlan'}},
-  {id:1003,lat:47.0105,lon:28.8576,tags:{name:'Biblioteca Nationala Moldova',amenity:'library','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:1004,lat:47.0261,lon:28.8307,tags:{name:'Aeroportul Chisinau WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:1005,lat:47.0195,lon:28.8261,tags:{name:'Piata Centrala Hotspot',amenity:'marketplace','internet_access':'wlan'}},
-  {id:1006,lat:47.0350,lon:28.8170,tags:{name:'Coffee Moloko',amenity:'cafe','internet_access':'wlan'}},
-  {id:1007,lat:47.0120,lon:28.8450,tags:{name:'Hotel Nobil Lobby WiFi',tourism:'hotel','internet_access':'wlan'}},
-  {id:1008,lat:47.0290,lon:28.8400,tags:{name:'Gara Feroviara WiFi',railway:'station','internet_access':'wlan'}},
-  // Moscow
-  {id:2001,lat:55.7558,lon:37.6173,tags:{name:'Park Gorkogo Free WiFi',amenity:'park','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:2002,lat:55.7522,lon:37.6156,tags:{name:'Shokoladnitsa Arbat',amenity:'cafe','internet_access':'wlan'}},
-  {id:2003,lat:55.7609,lon:37.6185,tags:{name:'Biblioteka im. Lenina',amenity:'library','internet_access':'wlan'}},
-  {id:2004,lat:55.7387,lon:37.6032,tags:{name:'McDonalds Luzhniki',amenity:'fast_food','internet_access':'wlan'}},
-  {id:2005,lat:55.7650,lon:37.5900,tags:{name:'Moskva-City WiFi Zone',amenity:'office','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:2006,lat:55.7737,lon:37.6200,tags:{name:'Sheremetyevo Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Paris
-  {id:3001,lat:48.8566,lon:2.3522,tags:{name:'Paris WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:3002,lat:48.8738,lon:2.2950,tags:{name:'Tour Eiffel Free WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:3003,lat:48.8606,lon:2.3376,tags:{name:'Musee du Louvre WiFi',tourism:'museum','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:3004,lat:48.8867,lon:2.3431,tags:{name:'Gare du Nord WiFi',railway:'station','internet_access':'wlan'}},
-  {id:3005,lat:48.8530,lon:2.3499,tags:{name:'Cafe de Flore',amenity:'cafe','internet_access':'wlan'}},
-  // London
-  {id:4001,lat:51.5074,lon:-0.1278,tags:{name:'London O2 WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:4002,lat:51.5007,lon:-0.1246,tags:{name:'Westminster Library',amenity:'library','internet_access':'wlan'}},
-  {id:4003,lat:51.5033,lon:-0.1195,tags:{name:'Tate Modern WiFi',tourism:'museum','internet_access':'wlan'}},
-  {id:4004,lat:51.5309,lon:-0.1233,tags:{name:'Kings Cross Station WiFi',railway:'station','internet_access':'wlan'}},
-  {id:4005,lat:51.4700,lon:-0.4543,tags:{name:'Heathrow Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // New York
-  {id:5001,lat:40.7128,lon:-74.0060,tags:{name:'NYC LinkNYC Free WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:5002,lat:40.7580,lon:-73.9855,tags:{name:'Times Square WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:5003,lat:40.7484,lon:-73.9967,tags:{name:'New York Public Library',amenity:'library','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:5004,lat:40.6413,lon:-73.7781,tags:{name:'JFK Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:5005,lat:40.7614,lon:-73.9776,tags:{name:'Starbucks 5th Ave',amenity:'cafe','internet_access':'wlan'}},
-  // Berlin
-  {id:6001,lat:52.5200,lon:13.4050,tags:{name:'Berlin BerlinWifi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:6002,lat:52.5163,lon:13.3777,tags:{name:'Brandenburger Tor WiFi',tourism:'attraction','internet_access':'wlan'}},
-  {id:6003,lat:52.5068,lon:13.2762,tags:{name:'Flughafen BER WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:6004,lat:52.5096,lon:13.3761,tags:{name:'Stadtbibliothek Berlin',amenity:'library','internet_access':'wlan'}},
-  // Tokyo
-  {id:7001,lat:35.6762,lon:139.6503,tags:{name:'Tokyo Free Wi-Fi Shibuya',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:7002,lat:35.6895,lon:139.6917,tags:{name:'Shinjuku Station WiFi',railway:'station','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:7003,lat:35.7101,lon:139.8107,tags:{name:'Asakusa Tourist WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:7004,lat:35.5494,lon:139.7798,tags:{name:'Haneda Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Dubai
-  {id:8001,lat:25.2048,lon:55.2708,tags:{name:'Dubai Mall Free WiFi',amenity:'marketplace','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:8002,lat:25.1972,lon:55.2796,tags:{name:'Burj Khalifa WiFi Zone',tourism:'attraction','internet_access':'wlan'}},
-  {id:8003,lat:25.2532,lon:55.3657,tags:{name:'Dubai Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Singapore
-  {id:9001,lat:1.3521,lon:103.8198,tags:{name:'Wireless@SGx Orchard Rd',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:9002,lat:1.3592,lon:103.9894,tags:{name:'Changi Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:9003,lat:1.2816,lon:103.8636,tags:{name:'Gardens by the Bay WiFi',tourism:'attraction','internet_access':'wlan','internet_access:fee':'no'}},
-  // Istanbul
-  {id:10001,lat:41.0082,lon:28.9784,tags:{name:'Istanbul Free WiFi Sultanahmet',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:10002,lat:41.0136,lon:28.9550,tags:{name:'Grand Bazaar Hotspot',amenity:'marketplace','internet_access':'wlan'}},
-  {id:10003,lat:40.9764,lon:28.8165,tags:{name:'Istanbul Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Sydney
-  {id:11001,lat:-33.8688,lon:151.2093,tags:{name:'City of Sydney Free WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:11002,lat:-33.8698,lon:151.2090,tags:{name:'State Library NSW',amenity:'library','internet_access':'wlan'}},
-  {id:11003,lat:-33.9461,lon:151.1772,tags:{name:'Sydney Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Bucharest
-  {id:12001,lat:44.4268,lon:26.1025,tags:{name:'Bucuresti WiFi Public',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:12002,lat:44.4370,lon:26.0785,tags:{name:'Henri Coanda Airport WiFi',aeroway:'terminal','internet_access':'wlan'}},
-  // Barcelona
-  {id:13001,lat:41.3851,lon:2.1734,tags:{name:'Barcelona WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:13002,lat:41.4036,lon:2.1744,tags:{name:'Sagrada Familia WiFi Zone',tourism:'attraction','internet_access':'wlan'}},
-  {id:13003,lat:41.2974,lon:2.0833,tags:{name:'El Prat Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Amsterdam
-  {id:14001,lat:52.3676,lon:4.9041,tags:{name:'Amsterdam Free WiFi Centrum',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:14002,lat:52.3088,lon:4.7641,tags:{name:'Schiphol Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Rome
-  {id:15001,lat:41.9028,lon:12.4964,tags:{name:'Roma WiFi Municipale',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:15002,lat:41.8902,lon:12.4922,tags:{name:'Colosseo Area WiFi',tourism:'attraction','internet_access':'wlan'}},
-  {id:15003,lat:41.8003,lon:12.2388,tags:{name:'Fiumicino Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Bangkok
-  {id:16001,lat:13.7563,lon:100.5018,tags:{name:'Bangkok Free WiFi Central',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:16002,lat:13.6900,lon:100.7501,tags:{name:'Suvarnabhumi Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Toronto
-  {id:17001,lat:43.6532,lon:-79.3832,tags:{name:'Toronto Free Public WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:17002,lat:43.6777,lon:-79.6248,tags:{name:'Pearson Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Beijing
-  {id:18001,lat:39.9042,lon:116.4074,tags:{name:'Beijing Free WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:18002,lat:40.0799,lon:116.6031,tags:{name:'Capital Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Cairo
-  {id:19001,lat:30.0444,lon:31.2357,tags:{name:'Cairo Public WiFi Zone',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:19002,lat:30.1127,lon:31.4000,tags:{name:'Cairo Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Lagos
-  {id:20001,lat:6.5244,lon:3.3792,tags:{name:'Lagos Free WiFi Zone Victoria Island',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Buenos Aires
-  {id:21001,lat:-34.6037,lon:-58.3816,tags:{name:'Buenos Aires WiFi BA',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:21002,lat:-34.5592,lon:-58.4156,tags:{name:'Ezeiza Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Sao Paulo
-  {id:22001,lat:-23.5505,lon:-46.6333,tags:{name:'Sao Paulo WiFi Livre',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Mumbai
-  {id:23001,lat:19.0760,lon:72.8777,tags:{name:'Mumbai Free WiFi MMRDA',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:23002,lat:19.0896,lon:72.8656,tags:{name:'Chhatrapati Shivaji Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Seoul
-  {id:24001,lat:37.5665,lon:126.9780,tags:{name:'Seoul WiFi Zone Myeongdong',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:24002,lat:37.4602,lon:126.4407,tags:{name:'Incheon Airport Free WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Vienna
-  {id:25001,lat:48.2082,lon:16.3738,tags:{name:'Wien Gratis WLAN',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:25002,lat:48.1103,lon:16.5697,tags:{name:'Wien Flughafen WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Prague
-  {id:26001,lat:50.0755,lon:14.4378,tags:{name:'Praha Free WiFi Namesti',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Warsaw
-  {id:27001,lat:52.2297,lon:21.0122,tags:{name:'Warszawa Hotspot Miejski',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Athens
-  {id:28001,lat:37.9838,lon:23.7275,tags:{name:'Athens Free WiFi Syntagma',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Kyiv
-  {id:29001,lat:50.4501,lon:30.5234,tags:{name:'Kyiv Free City WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:29002,lat:50.3450,lon:30.8944,tags:{name:'Boryspil Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Helsinki
-  {id:30001,lat:60.1699,lon:24.9384,tags:{name:'Helsinki City WiFi',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Stockholm
-  {id:31001,lat:59.3293,lon:18.0686,tags:{name:'Stockholm Free WiFi Gamla Stan',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Lisbon
-  {id:32001,lat:38.7223,lon:-9.1393,tags:{name:'Lisboa WiFi Municipal',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  // Madrid
-  {id:33001,lat:40.4168,lon:-3.7038,tags:{name:'Madrid WiFi Libre',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}},
-  {id:33002,lat:40.4983,lon:-3.5676,tags:{name:'Barajas Airport WiFi',aeroway:'terminal','internet_access':'wlan','internet_access:fee':'no'}},
-  // Mexico City
-  {id:34001,lat:19.4326,lon:-99.1332,tags:{name:'CDMX WiFi Gratis',amenity:'public_building','internet_access':'wlan','internet_access:fee':'no'}}
-];
-
-function getSeedsInBounds(b){
-  var s=b.getSouth()-3, n=b.getNorth()+3;
-  var w=b.getWest()-3, e=b.getEast()+3;
-  return SEEDS.filter(function(p){
-    return p.lat>=s&&p.lat<=n&&p.lon>=w&&p.lon<=e;
-  }).map(function(p){
-    return {type:'node',id:p.id,lat:p.lat,lon:p.lon,tags:p.tags};
-  });
+function getActivePills(groupId) {
+  return Array.from(document.querySelectorAll(`#${groupId} .pill.active`)).map(p => p.dataset.val);
 }
 
-// ── OVERPASS FETCH ──
-function buildQL(b){
-  var s=b.getSouth().toFixed(4);
-  var w=b.getWest().toFixed(4);
-  var n=b.getNorth().toFixed(4);
-  var e=b.getEast().toFixed(4);
-  var bb=s+','+w+','+n+','+e;
-  return '[out:json][timeout:28];(node["internet_access"~"wlan|yes"]["internet_access:fee"!="yes"]('+bb+');node["wifi"="yes"]('+bb+');node["free_wifi"="yes"]('+bb+');node["internet_access:fee"="no"]('+bb+'););out body 500;';
-}
+// ==============================
+// BUILD PROMPT
+// ==============================
+function buildPrompt() {
+  const quickText = document.getElementById('quick-input').value.trim();
+  const age = document.getElementById('f-age').value;
+  const gender = document.getElementById('f-gender').value;
+  const weight = document.getElementById('f-weight').value;
+  const height = document.getElementById('f-height').value;
+  const level = getActivePills('f-level');
+  const goals = getActivePills('f-goal');
+  const restrictions = getActivePills('f-restrictions');
+  const equipment = getActivePills('f-equipment');
 
-function tryFetch(url, opts){
-  return new Promise(function(resolve, reject){
-    var done=false;
-    var t=setTimeout(function(){if(!done){done=true;reject(new Error('timeout'));}},12000);
-    fetch(url, opts||{}).then(function(r){
-      clearTimeout(t);
-      if(!done){done=true;resolve(r);}
-    }).catch(function(e){
-      clearTimeout(t);
-      if(!done){done=true;reject(e);}
-    });
-  });
-}
+  let prompt = `Ты персональный тренер. Создай структурированный план тренировки на основе запроса пользователя.
 
-async function fetchOSM(bounds){
-  var ql=buildQL(bounds);
-  var enc=encodeURIComponent(ql);
+ЗАПРОС: "${quickText}"
+`;
 
-  var strategies=[
+  if (age || gender || weight || height) {
+    prompt += `\nПАРАМЕТРЫ ПОЛЬЗОВАТЕЛЯ:`;
+    if (age) prompt += `\n- Возраст: ${age} лет`;
+    if (gender) prompt += `\n- Пол: ${gender === 'male' ? 'мужской' : 'женский'}`;
+    if (weight) prompt += `\n- Вес: ${weight} кг`;
+    if (height) prompt += `\n- Рост: ${height} см`;
+  }
+
+  if (level.length) prompt += `\n- Уровень: ${level.join(', ')}`;
+  if (goals.length) prompt += `\n- Цель: ${goals.join(', ')}`;
+  if (restrictions.length) prompt += `\n- Ограничения/боли: ${restrictions.join(', ')} — избегай нагрузки на эти зоны`;
+  if (equipment.length) prompt += `\n- Инвентарь: ${equipment.join(', ')}`;
+
+  prompt += `
+
+ВАЖНО: Верни ТОЛЬКО JSON, без markdown, без объяснений, без \`\`\`.
+
+JSON формат:
+{
+  "title": "Название тренировки (2-4 слова)",
+  "totalMinutes": число,
+  "level": "Новичок|Средний|Продвинутый",
+  "focus": "напр. Спина и растяжка",
+  "summary": "2-3 предложения про тренировку и её пользу для пользователя",
+  "tags": ["тег1", "тег2", "тег3"],
+  "exercises": [
     {
-      name:'overpass-api.de',
-      fn:async function(){
-        var r=await tryFetch('https://overpass-api.de/api/interpreter?data='+enc);
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }
-    },
-    {
-      name:'kumi.systems',
-      fn:async function(){
-        var r=await tryFetch('https://overpass.kumi.systems/api/interpreter?data='+enc);
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }
-    },
-    {
-      name:'private.coffee',
-      fn:async function(){
-        var r=await tryFetch('https://overpass.private.coffee/api/interpreter?data='+enc);
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }
-    },
-    {
-      name:'allorigins proxy',
-      fn:async function(){
-        var target='https://overpass-api.de/api/interpreter?data='+enc;
-        var r=await tryFetch('https://api.allorigins.win/get?url='+encodeURIComponent(target));
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        var j=await r.json();
-        return JSON.parse(j.contents);
-      }
-    },
-    {
-      name:'corsproxy.io',
-      fn:async function(){
-        var target='https://overpass-api.de/api/interpreter?data='+enc;
-        var r=await tryFetch('https://corsproxy.io/?'+encodeURIComponent(target));
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }
-    },
-    {
-      name:'thingproxy',
-      fn:async function(){
-        var target='https://overpass-api.de/api/interpreter?data='+enc;
-        var r=await tryFetch('https://thingproxy.freeboard.io/fetch/'+target);
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }
+      "name": "Название упражнения",
+      "description": "Краткое описание техники выполнения (1-2 предложения)",
+      "durationSeconds": число (время выполнения в секундах, 30-120),
+      "reps": "напр. 10-12 раз или null",
+      "restSeconds": число (отдых после в секундах, 15-45),
+      "muscles": ["мышца1", "мышца2"],
+      "tips": "Короткий совет по технике"
     }
-  ];
-
-  for(var i=0;i<strategies.length;i++){
-    var s=strategies[i];
-    $('stxt').textContent='Trying: '+s.name+'...';
-    try{
-      var data=await s.fn();
-      if(data&&Array.isArray(data.elements)){
-        console.log('OK via '+s.name+': '+data.elements.length+' pts');
-        return data;
-      }
-    }catch(e){
-      console.warn(s.name+' failed: '+e.message);
-    }
-  }
-  return null;
+  ]
 }
 
-// ── PROCESS ──
-function processElements(els){
-  var seen={};
-  var pts=[];
-  for(var i=0;i<els.length;i++){
-    var el=els[i];
-    if(el.type!=='node'||!el.lat||!el.lon)continue;
-    if(seen[el.id])continue;
-    seen[el.id]=true;
-    var t=el.tags||{};
-    var tp=classifyTags(t);
-    pts.push({
-      id:el.id,lat:el.lat,lon:el.lon,
-      name:getName(t),addr:getAddr(t),
-      type:tp,tags:t,cfg:TC[tp]
-    });
-  }
-  S.all=pts;
-  applyFilter();
-  updateCounts(pts.length);
-  if(pts.length>0){
-    $('nopts').style.display='none';
-    toast('Found '+pts.length+' free WiFi spots','ok');
-    $('stxt').textContent='Loaded '+pts.length+' spots';
-  }else{
-    $('nopts').style.display='block';
-    $('stxt').textContent='No WiFi data here';
-  }
+Создай 5-9 упражнений, учитывая: доступное время, ограничения по здоровью, уровень подготовки. Упражнения должны быть реальными, безопасными и подходящими под описанный контекст.`;
+
+  return prompt;
 }
 
-// ── LOAD ──
-async function load(){
-  if(S.loading)return;
-  var map=S.map;
-  var bounds=map.getBounds();
-  var zoom=map.getZoom();
-
-  if(zoom<5){
-    $('stxt').textContent='Zoom in to see WiFi spots';
-    $('nopts').style.display='block';
-    clearM();
-    return;
-  }
-  $('nopts').style.display='none';
-
-  var ck=Math.round(bounds.getSouth()*50)+','+Math.round(bounds.getWest()*50)+','+Math.round(bounds.getNorth()*50)+','+Math.round(bounds.getEast()*50);
-  if(S.cache[ck]){
-    processElements(S.cache[ck]);
+// ==============================
+// GENERATE PLAN
+// ==============================
+async function generatePlan() {
+  const quickText = document.getElementById('quick-input').value.trim();
+  if (!quickText) {
+    showNotif('✏️ Опиши свою ситуацию');
+    document.getElementById('quick-input').focus();
     return;
   }
 
-  S.loading=true;
-  $('btnR').classList.add('spin');
-  $('stxt').textContent='Loading WiFi data...';
+  const btn = document.getElementById('btn-generate');
+  const btnText = document.getElementById('btn-text');
+  const spinner = document.getElementById('spinner');
 
-  try{
-    var data=await fetchOSM(bounds);
-    if(data&&data.elements&&data.elements.length>0){
-      S.cache[ck]=data.elements;
-      processElements(data.elements);
-    }else{
-      // use seeds
-      var seeds=getSeedsInBounds(bounds);
-      S.cache[ck]=seeds;
-      processElements(seeds);
-      if(seeds.length>0){
-        toast('Showing '+seeds.length+' known hotspots (live API unavailable)','warn');
-      }else{
-        toast('No data — try a major city','warn');
-        $('nopts').style.display='block';
-      }
-    }
-  }catch(e){
-    console.error(e);
-    var seeds=getSeedsInBounds(bounds);
-    processElements(seeds);
-    $('stxt').textContent='API error — showing cached data';
-  }finally{
-    S.loading=false;
-    $('btnR').classList.remove('spin');
-  }
-}
+  btn.classList.add('loading');
+  btnText.textContent = 'Генерирую план...';
+  spinner.style.display = 'flex';
 
-// ── FILTER ──
-function applyFilter(){
-  var q=S.q.toLowerCase();
-  var t=S.type;
-  S.filtered=S.all.filter(function(p){
-    if(t!=='all'&&p.type!==t)return false;
-    if(q&&p.name.toLowerCase().indexOf(q)<0&&p.addr.toLowerCase().indexOf(q)<0)return false;
-    return true;
-  });
-  renderMarkers();
-  renderList();
-}
-
-// ── MARKERS ──
-function clearM(){if(S.markers)S.markers.clearLayers();}
-
-function renderMarkers(){
-  if(!S.markers)return;
-  clearM();
-  var pts=S.filtered.slice(0,600);
-  for(var i=0;i<pts.length;i++){
-    var p=pts[i];
-    var cfg=p.cfg;
-    var delay_ms=Math.min(i*6,350);
-    var icon=L.divIcon({
-      className:'',
-      html:'<div class="wm" style="width:28px;height:28px;background:'+cfg.bg+';color:'+cfg.c+';border-color:'+cfg.c+';box-shadow:0 0 10px '+cfg.c+';animation-delay:'+delay_ms+'ms">'+cfg.e+'</div>',
-      iconSize:[28,28],iconAnchor:[14,14]
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: 'You are a JSON API. You must ALWAYS respond with valid JSON only. No prose, no markdown, no code fences, no explanation. Just the raw JSON object starting with { and ending with }.',
+        messages: [{ role: 'user', content: buildPrompt() }]
+      })
     });
-    (function(pt){
-      L.marker([pt.lat,pt.lon],{icon:icon})
-        .bindPopup(buildPopup(pt),{maxWidth:290,className:'wpop'})
-        .on('click',function(){S.selId=pt.id;hlItem(pt.id);})
-        .addTo(S.markers);
-    })(p);
-  }
-}
 
-function buildPopup(p){
-  var cfg=p.cfg;
-  var nav='https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lon;
-  var ssid=p.tags['internet_access:ssid']||p.tags['ssid']||'';
-  var hours=p.tags['opening_hours']||'';
-  var website=p.tags['website']||p.tags['contact:website']||'';
-  var h='<div class="pi">';
-  h+='<div class="phead"><div class="pico" style="background:'+cfg.bg+';border:1px solid '+cfg.c+'40">'+cfg.e+'</div>';
-  h+='<div><div class="pname">'+esc(p.name)+'</div><div class="ptype">'+cfg.l+'</div></div></div>';
-  h+='<div class="pdiv"></div>';
-  if(p.addr)h+='<div class="prow"><span>📍</span><span>'+esc(p.addr)+'</span></div>';
-  if(ssid)h+='<div class="prow"><span>📶</span><span>'+esc(ssid)+'</span></div>';
-  if(hours)h+='<div class="prow"><span>🕐</span><span>'+esc(hours)+'</span></div>';
-  if(website)h+='<div class="prow"><span>🌐</span><span><a href="'+esc(website)+'" target="_blank" style="color:#00e5ff">Open site</a></span></div>';
-  h+='<div class="pbadge">✅ Free WiFi</div>';
-  h+='<a class="pbtn" href="'+nav+'" target="_blank">🗺️ Get directions</a>';
-  h+='</div>';
-  return h;
-}
+    const data = await response.json();
 
-// ── LIST ──
-function renderList(){
-  var pts=S.filtered;
-  var html='';
-  if(pts.length===0){
-    html='<div class="empty"><div class="ei">🔍</div><p>No spots match.<br>Try different filter or area.</p></div>';
-  }else{
-    for(var i=0;i<Math.min(pts.length,100);i++){
-      html+=buildItem(pts[i],i);
+    // Check for API-level errors
+    if (data.error) {
+      throw new Error(`API error: ${data.error.message || JSON.stringify(data.error)}`);
     }
-  }
-  $('hlist').innerHTML=html;
-  $('shlist').innerHTML=html;
-  bindItemClicks();
-}
 
-function buildItem(p,i){
-  var cfg=p.cfg;
-  var act=p.id===S.selId?' act':'';
-  var dms=Math.min(i*18,380);
-  var h='<div class="hi'+act+'" data-id="'+p.id+'" style="animation-delay:'+dms+'ms">';
-  h+='<div class="htop"><div class="hico" style="background:'+cfg.bg+';border:1px solid '+cfg.c+'40">'+cfg.e+'</div>';
-  h+='<div style="flex:1;min-width:0"><div class="hname" style="color:'+cfg.c+'">'+esc(p.name)+'</div>';
-  h+='<div class="haddr">'+(p.addr?esc(p.addr):cfg.l)+'</div></div></div>';
-  h+='<div class="tags"><span class="tag free">✅ Free</span>';
-  if(p.tags['internet_access:ssid'])h+='<span class="tag">📶 '+esc(p.tags['internet_access:ssid'])+'</span>';
-  if(p.tags['opening_hours'])h+='<span class="tag">🕐 Hours</span>';
-  h+='</div></div>';
-  return h;
-}
+    const raw = data.content?.[0]?.text || '';
+    console.log('Raw AI response:', raw); // debug
 
-function bindItemClicks(){
-  var items=document.querySelectorAll('.hi');
-  for(var i=0;i<items.length;i++){
-    (function(el){
-      el.addEventListener('click',function(){
-        var id=+el.getAttribute('data-id');
-        var pt=null;
-        for(var j=0;j<S.all.length;j++){if(S.all[j].id===id){pt=S.all[j];break;}}
-        if(!pt)return;
-        S.map.setView([pt.lat,pt.lon],Math.max(S.map.getZoom(),15),{animate:true});
-        S.selId=id;
-        hlItem(id);
-        if(window.innerWidth<=768){S.sheetOpen=false;$('bsheet').classList.remove('exp');}
-      });
-    })(items[i]);
-  }
-}
+    let plan;
+    try {
+      // Try multiple extraction strategies
+      let jsonStr = raw.trim();
 
-function hlItem(id){
-  var items=document.querySelectorAll('.hi');
-  for(var i=0;i<items.length;i++){
-    var el=items[i];
-    el.classList.toggle('act',+el.getAttribute('data-id')===id);
-  }
-}
+      // Strategy 1: remove code fences
+      jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
-// ── UI ──
-function updateCounts(n){
-  $('hcnt').textContent=n+' spots';
-  $('pcnt').textContent=n;
-  $('shcnt').textContent=n;
-}
+      // Strategy 2: extract first {...} block
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) jsonStr = match[0];
 
-function setArea(txt){$('areatxt').textContent=txt;}
-
-function toast(msg,type){
-  var c=$('toasts');
-  var el=document.createElement('div');
-  el.className='toast '+(type||'info');
-  el.textContent=msg;
-  c.appendChild(el);
-  setTimeout(function(){
-    el.style.opacity='0';el.style.transform='translateX(18px)';el.style.transition='all .28s';
-    setTimeout(function(){el.remove();},300);
-  },3500);
-}
-
-var areaTimer;
-function updateArea(){
-  clearTimeout(areaTimer);
-  areaTimer=setTimeout(function(){
-    var c=S.map.getCenter();
-    var z=S.map.getZoom();
-    if(z<7){setArea('World');return;}
-    fetch('https://nominatim.openstreetmap.org/reverse?lat='+c.lat+'&lon='+c.lng+'&format=json&zoom=10',{headers:{'Accept-Language':'en'}})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var a=d.address||{};
-        var parts=[(a.city||a.town||a.village||a.county),a.country].filter(Boolean);
-        setArea(parts.slice(0,2).join(', ')||'Map');
-      }).catch(function(){});
-  },1200);
-}
-
-// ── MAP INIT ──
-function initMap(){
-  S.markers=L.featureGroup();
-  var map=L.map('map',{zoomControl:false,attributionControl:false,preferCanvas:true,maxZoom:19,minZoom:2});
-  map.setView([20,0],3);
-  S.map=map;
-
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; OpenStreetMap &copy; CARTO',
-    subdomains:'abcd',maxZoom:20
-  }).addTo(map);
-
-  L.control.attribution({prefix:''}).addTo(map);
-  S.markers.addTo(map);
-
-  var mt;
-  map.on('moveend zoomend',function(){
-    clearTimeout(mt);
-    mt=setTimeout(function(){load();updateArea();},700);
-  });
-
-  map.on('zoomend',function(){
-    if(map.getZoom()<5){clearM();updateCounts(0);S.all=[];S.filtered=[];renderList();}
-  });
-
-  S.autoTimer=setInterval(function(){
-    if(map.getZoom()>=5){
-      var b=map.getBounds();
-      var k=Math.round(b.getSouth()*50)+','+Math.round(b.getWest()*50)+','+Math.round(b.getNorth()*50)+','+Math.round(b.getEast()*50);
-      delete S.cache[k];
-      load();
+      plan = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Parse error. Raw was:', raw);
+      throw new Error(`Не удалось разобрать ответ AI. Raw: ${raw.slice(0, 200)}`);
     }
-  },5*60*1000);
-}
 
-// ── CONTROLS ──
-function bindControls(){
-  $('btnR').onclick=function(){
-    var b=S.map.getBounds();
-    var k=Math.round(b.getSouth()*50)+','+Math.round(b.getWest()*50)+','+Math.round(b.getNorth()*50)+','+Math.round(b.getEast()*50);
-    delete S.cache[k];
-    load();
-  };
+    currentPlan = plan;
+    doneExercises.clear();
+    renderPlan(plan);
 
-  $('fabL').onclick=function(){
-    if(!navigator.geolocation){toast('Geolocation not supported','warn');return;}
-    $('fabL').textContent='⏳';
-    navigator.geolocation.getCurrentPosition(function(p){
-      $('fabL').textContent='📍';
-      S.map.setView([p.coords.latitude,p.coords.longitude],14,{animate:true});
-    },function(){
-      $('fabL').textContent='📍';
-      toast('Could not get location','warn');
-    });
-  };
+    document.getElementById('plan-section').classList.add('visible');
+    document.getElementById('plan-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  $('fabP').onclick=function(){S.map.zoomIn();};
-  $('fabM').onclick=function(){S.map.zoomOut();};
-
-  var sinp=$('sinp');
-  var st;
-  sinp.addEventListener('input',function(){
-    S.q=sinp.value.trim();
-    $('sclr').style.display=S.q?'block':'none';
-    clearTimeout(st);st=setTimeout(applyFilter,220);
-  });
-  $('sclr').onclick=function(){sinp.value='';S.q='';$('sclr').style.display='none';applyFilter();};
-
-  function syncFilters(srcId,destId,type){
-    document.getElementById(srcId).querySelectorAll('.fc').forEach(function(fc){
-      fc.addEventListener('click',function(){
-        document.getElementById(srcId).querySelectorAll('.fc').forEach(function(c){c.classList.remove('on');});
-        document.getElementById(destId).querySelectorAll('.fc').forEach(function(c){c.classList.remove('on');});
-        fc.classList.add('on');
-        var mirror=document.getElementById(destId).querySelector('[data-t="'+fc.getAttribute('data-t')+'"]');
-        if(mirror)mirror.classList.add('on');
-        S.type=fc.getAttribute('data-t');
-        applyFilter();
-      });
-    });
+  } catch (err) {
+    console.error('Generation error:', err);
+    const msg = err.message?.includes('API error') ? '❌ Ошибка API. Проверь ключ.' :
+                err.message?.includes('разобрать') ? '❌ AI вернул неверный формат. Попробуй ещё раз.' :
+                '❌ Нет соединения. Попробуй ещё раз.';
+    showNotif(msg, 4000);
+  } finally {
+    btn.classList.remove('loading');
+    btnText.textContent = '⚡ Создать план тренировки';
+    spinner.style.display = 'none';
   }
-  syncFilters('flt','fltm');
-  syncFilters('fltm','flt');
+}
 
-  $('shtog').addEventListener('click',function(){
-    S.sheetOpen=!S.sheetOpen;
-    $('bsheet').classList.toggle('exp',S.sheetOpen);
+// ==============================
+// RENDER PLAN
+// ==============================
+function renderPlan(plan) {
+  // Title + meta
+  document.getElementById('plan-title').textContent = plan.title || 'Тренировка';
+  const meta = document.getElementById('plan-meta');
+  meta.innerHTML = '';
+  const tags = [
+    plan.totalMinutes ? `⏱ ${plan.totalMinutes} мин` : null,
+    plan.level || null,
+    plan.focus || null,
+    ...(plan.tags || [])
+  ].filter(Boolean);
+  tags.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'meta-tag';
+    el.textContent = t;
+    meta.appendChild(el);
   });
 
-  var ts=0;
-  $('bsheet').addEventListener('touchstart',function(e){ts=e.touches[0].clientY;},{passive:true});
-  $('bsheet').addEventListener('touchend',function(e){
-    var d=ts-e.changedTouches[0].clientY;
-    if(d>45&&!S.sheetOpen){S.sheetOpen=true;$('bsheet').classList.add('exp');}
-    if(d<-45&&S.sheetOpen){S.sheetOpen=false;$('bsheet').classList.remove('exp');}
-  },{passive:true});
-}
+  // Summary
+  document.getElementById('plan-summary').textContent = plan.summary || '';
 
-function tryGeo(){
-  if(!navigator.geolocation)return;
-  navigator.geolocation.getCurrentPosition(function(p){
-    S.map.setView([p.coords.latitude,p.coords.longitude],13,{animate:false});
-  },function(){},{ timeout:5000 });
-}
+  // Progress
+  updateProgress();
 
-function loadScript(src){
-  return new Promise(function(resolve,reject){
-    var s=document.createElement('script');
-    s.src=src;s.onload=resolve;s.onerror=reject;
-    document.head.appendChild(s);
+  // Exercises
+  const list = document.getElementById('exercises-list');
+  list.innerHTML = '';
+
+  (plan.exercises || []).forEach((ex, i) => {
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    card.id = `ex-card-${i}`;
+    card.onclick = () => activateExercise(i);
+
+    const musclesBadges = (ex.muscles || []).slice(0, 2).map(m =>
+      `<span class="badge badge-muscle">${m}</span>`).join('');
+
+    const timeBadge = ex.durationSeconds
+      ? `<span class="badge badge-time">⏱ ${formatTime(ex.durationSeconds)}</span>` : '';
+    const repsBadge = ex.reps
+      ? `<span class="badge badge-reps">${ex.reps}</span>` : '';
+    const restBadge = ex.restSeconds
+      ? `<span class="badge badge-rest">💤 ${ex.restSeconds}с отдых</span>` : '';
+
+    card.innerHTML = `
+      <div class="exercise-top">
+        <div class="ex-num">${i + 1}</div>
+        <div class="ex-content">
+          <div class="ex-title">${ex.name}</div>
+          <div class="ex-desc">${ex.description || ''}</div>
+          <div class="ex-badges">
+            ${timeBadge}${repsBadge}${restBadge}${musclesBadges}
+          </div>
+          ${ex.tips ? `<div class="ex-desc" style="margin-top:6px;color:rgba(168,255,120,0.6)">💡 ${ex.tips}</div>` : ''}
+        </div>
+      </div>
+      <div class="ex-timer-wrap">
+        <div class="ex-timer-bar-bg"><div class="ex-timer-bar" id="ex-bar-${i}"></div></div>
+        <div class="ex-timer-bottom">
+          <span class="ex-timer-time" id="ex-time-${i}">${formatTime(ex.durationSeconds || 30)}</span>
+          <div class="ex-timer-btns">
+            <button class="btn-sm btn-sm-muted" onclick="event.stopPropagation();skipExercise(${i})">Пропустить</button>
+            <button class="btn-sm btn-sm-green" id="ex-btn-${i}" onclick="event.stopPropagation();toggleExerciseTimer(${i})">▶ Старт</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    list.appendChild(card);
   });
+
+  // Reset timers
+  stopOverallTimer();
+  overallTimer.seconds = 0;
+  updateOverallDisplay();
+  document.getElementById('completion-banner').classList.remove('visible');
 }
 
-// ── BOOT ──
-(async function boot(){
-  var ls=$('ls');
-  try{
-    ls.textContent='Loading Leaflet...';
-    try{
-      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-    }catch(e){
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js');
+// ==============================
+// EXERCISE ACTIVATION
+// ==============================
+function activateExercise(idx) {
+  document.querySelectorAll('.exercise-card').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+  stopExTimer();
+}
+
+// ==============================
+// EXERCISE TIMER
+// ==============================
+function toggleExerciseTimer(idx) {
+  const ex = currentPlan.exercises[idx];
+  const totalSec = ex.durationSeconds || 30;
+
+  if (exTimer.cardIdx !== idx) {
+    stopExTimer();
+    exTimer.seconds = totalSec;
+    exTimer.total = totalSec;
+    exTimer.cardIdx = idx;
+    exTimer.running = false;
+  }
+
+  if (exTimer.running) {
+    pauseExTimer(idx);
+  } else {
+    startExTimer(idx, totalSec);
+  }
+}
+
+function startExTimer(idx, total) {
+  exTimer.running = true;
+  exTimer.cardIdx = idx;
+  if (!exTimer.total) exTimer.total = total;
+
+  const btn = document.getElementById(`ex-btn-${idx}`);
+  if (btn) btn.textContent = '⏸ Пауза';
+
+  // Also start overall if not running
+  if (!overallTimer.running) startOverallTimer();
+
+  exTimer.interval = setInterval(() => {
+    exTimer.seconds--;
+    updateExTimerDisplay(idx);
+    if (exTimer.seconds <= 0) {
+      clearInterval(exTimer.interval);
+      exTimer.running = false;
+      completeExercise(idx);
     }
-    if(typeof L==='undefined')throw new Error('Leaflet failed to load');
+  }, 1000);
+}
 
-    ls.textContent='Building map...';
-    initMap();
+function pauseExTimer(idx) {
+  clearInterval(exTimer.interval);
+  exTimer.running = false;
+  const btn = document.getElementById(`ex-btn-${idx}`);
+  if (btn) btn.textContent = '▶ Продолжить';
+}
 
-    ls.textContent='Setting up UI...';
-    bindControls();
+function stopExTimer() {
+  clearInterval(exTimer.interval);
+  exTimer.running = false;
+  exTimer.cardIdx = -1;
+  exTimer.seconds = 0;
+  exTimer.total = 0;
+}
 
-    ls.textContent='Ready!';
-    await delay(250);
-
-    $('loader').classList.add('out');
-
-    setTimeout(function(){tryGeo();},200);
-    setTimeout(function(){
-      toast('Pan and zoom to load WiFi spots — or zoom to your city!','info');
-      $('stxt').textContent='Ready';
-    },600);
-    setTimeout(function(){load();},800);
-
-  }catch(err){
-    ls.textContent='Error: '+err.message;
-    ls.style.color='#ff6b9d';
-    console.error(err);
+function updateExTimerDisplay(idx) {
+  const timeEl = document.getElementById(`ex-time-${idx}`);
+  const barEl = document.getElementById(`ex-bar-${idx}`);
+  if (timeEl) timeEl.textContent = formatTime(exTimer.seconds);
+  if (barEl) {
+    const pct = exTimer.total > 0 ? (exTimer.seconds / exTimer.total * 100) : 100;
+    barEl.style.width = pct + '%';
   }
-})();
+}
 
-})();
+function completeExercise(idx) {
+  doneExercises.add(idx);
+  const card = document.getElementById(`ex-card-${idx}`);
+  if (card) {
+    card.classList.remove('active');
+    card.classList.add('done');
+  }
+
+  const btn = document.getElementById(`ex-btn-${idx}`);
+  if (btn) btn.textContent = '✓ Готово';
+
+  updateProgress();
+
+  // Auto-advance
+  const next = idx + 1;
+  if (next < currentPlan.exercises.length) {
+    const ex = currentPlan.exercises[idx];
+    const restSec = ex.restSeconds || 20;
+    showNotif(`💤 Отдых ${restSec} с`);
+    setTimeout(() => {
+      activateExercise(next);
+      document.getElementById(`ex-card-${next}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, restSec * 1000);
+  } else {
+    showNotif('🎉 Тренировка завершена!');
+    stopOverallTimer();
+    setTimeout(() => {
+      document.getElementById('completion-banner').classList.add('visible');
+      document.getElementById('completion-banner').scrollIntoView({ behavior: 'smooth' });
+    }, 500);
+  }
+}
+
+function skipExercise(idx) {
+  stopExTimer();
+  completeExercise(idx);
+}
+
+// ==============================
+// PROGRESS
+// ==============================
+function updateProgress() {
+  if (!currentPlan) return;
+  const total = (currentPlan.exercises || []).length;
+  const done = doneExercises.size;
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${done} / ${total}`;
+}
+
+// ==============================
+// OVERALL TIMER
+// ==============================
+function toggleOverallTimer() {
+  if (overallTimer.running) stopOverallTimer();
+  else startOverallTimer();
+}
+
+function startOverallTimer() {
+  overallTimer.running = true;
+  document.getElementById('btn-overall-play').textContent = '⏸';
+  overallTimer.interval = setInterval(() => {
+    overallTimer.seconds++;
+    updateOverallDisplay();
+  }, 1000);
+}
+
+function stopOverallTimer() {
+  clearInterval(overallTimer.interval);
+  overallTimer.running = false;
+  document.getElementById('btn-overall-play').textContent = '▶';
+}
+
+function resetOverallTimer() {
+  stopOverallTimer();
+  overallTimer.seconds = 0;
+  updateOverallDisplay();
+}
+
+function updateOverallDisplay() {
+  document.getElementById('overall-timer').textContent = formatTime(overallTimer.seconds);
+}
+
+// ==============================
+// RESET
+// ==============================
+function resetPlan() {
+  stopOverallTimer();
+  stopExTimer();
+  currentPlan = null;
+  doneExercises.clear();
+  document.getElementById('plan-section').classList.remove('visible');
+  document.getElementById('quick-input').value = '';
+  document.getElementById('char-counter').textContent = '0/300';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==============================
+// EXPORT PDF (client-side)
+// ==============================
+function exportPDF() {
+  if (!currentPlan) return;
+
+  const plan = currentPlan;
+  const exercises = plan.exercises || [];
+
+  const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${plan.title || 'Тренировка'}</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #1a1a2e; }
+  h1 { font-size: 26px; margin-bottom: 4px; color: #0f3460; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 16px; }
+  .summary { background: #f0f7ff; border-left: 4px solid #0f3460; padding: 12px 16px; margin-bottom: 20px; font-size: 14px; }
+  .ex { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .ex-num { display: inline-block; background: #0f3460; color: white; border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: 12px; font-weight: bold; margin-right: 8px; }
+  .ex-name { font-weight: bold; font-size: 16px; }
+  .ex-desc { color: #555; font-size: 13px; margin: 6px 0; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; background: #f0f0f0; }
+  .tip { color: #2d6a4f; font-size: 12px; margin-top: 6px; font-style: italic; }
+  footer { margin-top: 30px; text-align: center; color: #aaa; font-size: 12px; border-top: 1px solid #eee; padding-top: 16px; }
+</style>
+</head>
+<body>
+<h1>${plan.title || 'Тренировка'}</h1>
+<div class="meta">${[plan.totalMinutes ? `${plan.totalMinutes} мин` : '', plan.level || '', plan.focus || ''].filter(Boolean).join(' · ')}</div>
+${plan.summary ? `<div class="summary">${plan.summary}</div>` : ''}
+${exercises.map((ex, i) => `
+<div class="ex">
+  <span class="ex-num">${i + 1}</span><span class="ex-name">${ex.name}</span>
+  <div class="ex-desc">${ex.description || ''}</div>
+  <div class="badges">
+    ${ex.durationSeconds ? `<span class="badge">⏱ ${formatTime(ex.durationSeconds)}</span>` : ''}
+    ${ex.reps ? `<span class="badge">${ex.reps}</span>` : ''}
+    ${ex.restSeconds ? `<span class="badge">💤 отдых ${ex.restSeconds}с</span>` : ''}
+    ${(ex.muscles || []).map(m => `<span class="badge">${m}</span>`).join('')}
+  </div>
+  ${ex.tips ? `<div class="tip">💡 ${ex.tips}</div>` : ''}
+</div>`).join('')}
+<footer>Создано WorkoutNow · ${new Date().toLocaleDateString('ru-RU')}</footer>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(htmlContent);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 500);
+  showNotif('📄 Открыто для печати / сохранения в PDF');
+}
+
+// ==============================
+// EXPORT TEXT
+// ==============================
+function exportText() {
+  if (!currentPlan) return;
+
+  const plan = currentPlan;
+  const exercises = plan.exercises || [];
+
+  let text = `🏋️ ${plan.title || 'Тренировка'}\n`;
+  if (plan.totalMinutes) text += `⏱ ${plan.totalMinutes} минут | ${plan.level || ''} | ${plan.focus || ''}\n\n`;
+  if (plan.summary) text += `${plan.summary}\n\n`;
+  text += `УПРАЖНЕНИЯ:\n`;
+
+  exercises.forEach((ex, i) => {
+    text += `\n${i + 1}. ${ex.name}\n`;
+    if (ex.description) text += `   ${ex.description}\n`;
+    const details = [];
+    if (ex.durationSeconds) details.push(`${formatTime(ex.durationSeconds)}`);
+    if (ex.reps) details.push(ex.reps);
+    if (ex.restSeconds) details.push(`отдых ${ex.restSeconds}с`);
+    if (details.length) text += `   ${details.join(' · ')}\n`;
+    if (ex.tips) text += `   💡 ${ex.tips}\n`;
+  });
+
+  text += `\n\nСоздано WorkoutNow · ${new Date().toLocaleDateString('ru-RU')}`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showNotif('✅ Скопировано в буфер обмена');
+  }).catch(() => {
+    showNotif('❌ Не удалось скопировать');
+  });
+}
+
+// ==============================
+// UTILS
+// ==============================
+function formatTime(s) {
+  if (!s || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function showNotif(msg, duration = 3000) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ==============================
+// KEYBOARD SHORTCUT
+// ==============================
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    generatePlan();
+  }
+});
 </script>
 </body>
 </html>
